@@ -3,7 +3,7 @@
 @import "tailwindcss/utilities";
 
 body {
-    background-image: linear-gradient(to bottom, #f0f0f0, #87ceeb, #417a9f, #a81e23);
+    background-image: linear-gradient(to bottom, #c8e5e6, #87ceeb, #34749e, #a81e23);
     background-size: cover;
     background-position: center;
 }
@@ -34,20 +34,19 @@ body {
     margin: 0 auto;
 }
 
-.header-title {
-    color: #4da8da;
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
-    font-family: Comic Sans MS, cursive;
-    text-shadow: 4px 4px 8px white;
-    letter-spacing: 2px;
-    text-align: center;
-}
 
 .header-image {
     width: 400px;
     height: auto;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-wikirace {
+    width: 400px;
+    height: 60px;
     margin: 0 auto;
     display: flex;
     justify-content: center;
