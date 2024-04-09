@@ -1,10 +1,8 @@
 import Header from "./components/header";
-// import DoraButtonPage from "./components/dora-button-page";
-// import NobiButtonPage from "./components/nobi-button-page";
 
 function App() {
   return (
-    <div>
+    <div className="app-container">
       <Header></Header>
     </div>
   );

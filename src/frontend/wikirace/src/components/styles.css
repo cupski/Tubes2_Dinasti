@@ -2,19 +2,36 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+body {
+    background-image: linear-gradient(to bottom, #f0f0f0, #87ceeb, #417a9f, #a81e23);
+    background-size: cover;
+    background-position: center;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
 .header-container {
-    background-color: #87ceeb;
     display: flex;
     justify-content: center;
     align-items: center;
     padding-top: 3rem;
     padding-bottom: 3rem;
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    margin: 0;
 }
 
 .max-width-container {
     max-width: 700px;
     width: 80%;
+    margin: 0 auto;
 }
 
 .header-title {
