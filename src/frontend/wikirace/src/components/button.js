@@ -1,18 +1,13 @@
 import React from 'react';
 import './styles.css';
-import luffy from './assets/ids.png';
-import chopper from './assets/bfs.png';
+import LuffyButton from './luffy-button';
+import ChopperButton from './chopper-button';
 
 const Button = () => {
     return (
         <div className="button-container">
-            <button className="luffy-button">
-                <img src={luffy} alt="Button 1" />
-            </button>
-
-            <button className="chopper-button">
-                <img src={chopper} alt="Button 2" />
-            </button>
+            <LuffyButton/>
+            <ChopperButton/>
         </div>
     );
 }
