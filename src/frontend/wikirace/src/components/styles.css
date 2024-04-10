@@ -82,6 +82,8 @@ body {
     justify-content: center;
     align-items: center;
     color: white;
+    font-size: 18px;
+    font-family: "Comic Sans MS", cursive;
 }
 
 .luffy-button img {
@@ -104,6 +106,9 @@ body {
     justify-content: center;
     align-items: center;
     color: white;
+    font-family: ci;
+    font-size: 18px;
+    font-family: "Comic Sans MS", cursive;
 }
 
 .chopper-button img {
