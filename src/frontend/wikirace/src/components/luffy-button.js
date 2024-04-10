@@ -6,6 +6,7 @@ const LuffyButton = () => {
     return (
         <button className="luffy-button">
             <img src={luffy} alt="Button 1" />
+            IDS
         </button>
     );
 }

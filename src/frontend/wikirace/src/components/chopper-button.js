@@ -6,6 +6,7 @@ const ChopperButton = () => {
     return (
         <button className="chopper-button">
             <img src={chopper} alt="Button 2" />
+            BFS
         </button>
     );
 }
