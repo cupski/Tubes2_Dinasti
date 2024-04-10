@@ -55,12 +55,63 @@ body {
 
 .button-container {
     background: linear-gradient(to bottom, #a81e23, #841a1e);
-    padding: 150px;
+    padding: 180px;
     border-radius: 8px;
     margin-top: 300px;
     margin-left: 180px;
     margin-right: 180px;
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+
+/* luffy-button */
+.luffy-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 80px;
+    height: 80px;
+    position: absolute;
+    top: 100px;
+    left: 300px; 
+    
+}
+
+.luffy-button img {
+    width: 200%;
+    height: 200%;
+}
+
+/* chopper-button */
+.chopper-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 80px;
+    height: 80px;
+    position: absolute;
+    top: 100px;
+    right: 380px; 
+}
+
+.chopper-button img {
+    width: 200%;
+    height: 200%;
+}
+
+.button-page-container {
+    position: relative;
+}
+
+.page-title {
+    font-size: 50px;
+    text-align: center;
+    padding-top: 50px;
+    color: #075985;
+    text-shadow: 4px 4px 8px #bae6fd;
+    letter-spacing: 4px;
+    font-weight: bolder;
 }
