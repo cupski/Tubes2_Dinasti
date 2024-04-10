@@ -8,14 +8,30 @@ function App() {
   return (
     <Router>
       <div className="app-container">
-        <Header />
         <Routes>
-          <Route path="/" element={<Button />} />
-          <Route path="/ids-page" element={<IDSPage />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/ids-page/*" element={<IDSPageWOHeader />} />
         </Routes>
       </div>
     </Router>
   );
 }
+
+const Home = () => {
+  return (
+    <>
+      <Header />
+      <Button />
+    </>
+  );
+};
+
+const IDSPageWOHeader = () => {
+  return (
+    <>
+      <IDSPage />
+    </>
+  );
+};
 
 export default App;
