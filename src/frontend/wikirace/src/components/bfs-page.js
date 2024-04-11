@@ -1,12 +1,12 @@
 import React from 'react';
 
-const IDSPage = () => {
+const BFSPage = () => {
     return (
         <div>
-            <h1>IDS</h1>
+            <h1>BFS</h1>
             <p>nanti terima input start point, end point, dan hasil keluar disini</p>
         </div>
     );
 }
 
-export default IDSPage;
+export default BFSPage;
