@@ -27,10 +27,10 @@ const BFSPage = () => {
             <div className="search-container">
                 <button onClick={handleSearch}>Search</button>
             </div>
-            <div>
+            <div className="result-container">
                 <p>{result}</p>
             </div>
-            <img src={chopper_img} alt="Chopper" className="bottom-corner-image" />
+            {/* <img src={chopper_img} alt="Chopper" className="bottom-corner-image" /> */}
         </div>
     );
 }

@@ -28,10 +28,10 @@ const IDSPage = () => {
             <div className="search-container">
                 <button onClick={handleSearch}>Search</button>
             </div>
-            <div>
+            <div className="result-container">
                 <p>{result}</p>
             </div>
-            <img src={luffy_img} alt="Luffy" className="bottom-corner-image" />
+            {/* <img src={luffy_img} alt="Luffy" className="bottom-corner-image" /> */}
 
         </div>
     );
