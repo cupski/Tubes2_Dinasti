@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import './styles.css';
 import luffy_img from './assets/luffy.png'
+import ids_title from './assets/ids-text.png'
+
 
 const IDSPage = () => {
     const [startPoint, setStartPoint] = useState("");
@@ -14,7 +16,7 @@ const IDSPage = () => {
 
     return (
         <div className="logic-container">
-            <h1>IDS</h1>
+            <img src={ids_title} alt="BFS TITLE" className='header-dfs'/>
             <div>
                 <input type="text" value={startPoint} onChange={(e) => setStartPoint(e.target.value)} placeholder="Start Point" />
             </div>

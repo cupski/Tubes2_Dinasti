@@ -140,3 +140,25 @@ body {
     width: 250px;
     height: auto;
   }
+
+.header-bfs {
+    width: 200px;
+    height: 60px;
+    padding-bottom: 30px;
+    padding-top: 30px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-dfs {
+    width: 200px;
+    height: 60px;
+    padding-bottom: 30px;
+    padding-top: 30px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

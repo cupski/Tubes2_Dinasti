@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './styles.css';
 import chopper_img from './assets/chopper.png'
+import bfs_title from './assets/bfs-text.png'
 
 const BFSPage = () => {
     const [startPoint, setStartPoint] = useState("");
@@ -14,7 +15,7 @@ const BFSPage = () => {
 
     return (
         <div className="logic-container">
-            <h1>BFS</h1>
+            <img src={bfs_title} alt="BFS TITLE" className='header-bfs'/>
             <div>
                 <input type="text" value={startPoint} onChange={(e) => setStartPoint(e.target.value)} placeholder="Start Point" />
             </div>
