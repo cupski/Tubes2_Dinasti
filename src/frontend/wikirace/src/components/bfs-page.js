@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './styles.css';
+import chopper_img from './assets/chopper.png'
 
 const BFSPage = () => {
     const [startPoint, setStartPoint] = useState("");
@@ -26,6 +27,7 @@ const BFSPage = () => {
             <div>
                 <p>{result}</p>
             </div>
+            <img src={chopper_img} alt="Chopper" className="bottom-corner-image" />
         </div>
     );
 }

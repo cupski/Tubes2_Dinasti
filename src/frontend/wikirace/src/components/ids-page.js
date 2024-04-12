@@ -1,6 +1,6 @@
-// ids-page.js
 import React, { useState } from 'react';
 import './styles.css';
+import luffy_img from './assets/luffy.png'
 
 const IDSPage = () => {
     const [startPoint, setStartPoint] = useState("");
@@ -27,6 +27,8 @@ const IDSPage = () => {
             <div>
                 <p>{result}</p>
             </div>
+            <img src={luffy_img} alt="Luffy" className="bottom-corner-image" />
+
         </div>
     );
 }

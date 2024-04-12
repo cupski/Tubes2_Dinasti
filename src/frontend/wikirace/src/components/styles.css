@@ -127,5 +127,16 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 30vh; /* This will center the container vertically */
+    height: 30vh;
 }
+
+/* luffy dan chopper di logic page */
+.bottom-corner-image {
+    position: absolute;
+    margin-top: 800px;
+    margin-right: 50px;
+    bottom: 200;
+    right: 20px;
+    width: 250px;
+    height: auto;
+  }
