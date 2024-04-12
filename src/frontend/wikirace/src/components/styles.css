@@ -130,6 +130,26 @@ body {
     height: 30vh;
 }
 
+.start-container {
+    position: absolute;
+    top: 22%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.end-container {
+    position: absolute;
+    top: 31%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.search-container {
+    position: absolute;
+    top: 38%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
 /* luffy dan chopper di logic page */
 .bottom-corner-image {
     position: absolute;
@@ -145,20 +165,21 @@ body {
     width: 200px;
     height: 60px;
     padding-bottom: 30px;
-    padding-top: 30px;
     margin: 0 auto;
     display: flex;
     justify-content: center;
     align-items: center;
+    position: absolute;
 }
 
 .header-dfs {
     width: 200px;
     height: 60px;
     padding-bottom: 30px;
-    padding-top: 30px;
     margin: 0 auto;
     display: flex;
     justify-content: center;
     align-items: center;
+    position: absolute;
+
 }

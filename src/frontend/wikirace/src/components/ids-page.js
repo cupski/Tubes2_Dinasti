@@ -17,13 +17,15 @@ const IDSPage = () => {
     return (
         <div className="logic-container">
             <img src={ids_title} alt="BFS TITLE" className='header-dfs'/>
-            <div>
+            <div className="start-container">
+                <p style={{ fontFamily: 'Comic Sans MS', fontSize: '16px', marginBottom: '5px' }}>Enter Start Point:</p>
                 <input type="text" value={startPoint} onChange={(e) => setStartPoint(e.target.value)} placeholder="Start Point" />
             </div>
-            <div>
+            <div className="end-container">
+                <p style={{ fontFamily: 'Comic Sans MS', fontSize: '16px', marginBottom: '5px' }}>Enter End Point:</p>
                 <input type="text" value={endPoint} onChange={(e) => setEndPoint(e.target.value)} placeholder="End Point" />
             </div>
-            <div>
+            <div className="search-container">
                 <button onClick={handleSearch}>Search</button>
             </div>
             <div>
