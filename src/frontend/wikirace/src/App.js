@@ -30,17 +30,17 @@ const Home = () => {
 
 const IDSPageWOHeader = () => {
   return (
-    <>
+    <div className="page-container">
       <IDSPage />
-    </>
+    </div>
   );
 };
 
 const BFSPageWOHeader = () => {
   return (
-    <>
+    <div className="page-container">
       <BFSPage />
-    </>
+    </div>
   );
 };
 
