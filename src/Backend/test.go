@@ -1,55 +1,52 @@
 package main
 
 import (
-	"encoding/json"
+	"github.com/PuerkitoBio/goquery"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 	"container/list"
-)
-
-type Graph map[string][]string
-type WikiResponse struct {
-	Query struct {
-		Pages map[string]struct {
-			Links []struct {
-				Title string `json:"title"`
-			} `json:"links"`
-		} `json:"pages"`
-	} `json:"query"`
-}
-
-func getLinks(title string) ([]string, error) {
-	title = strings.Replace(title, " ", "_", -1) // Mengganti spasi dengan underscore untuk URL
-	url := fmt.Sprintf("https://en.wikipedia.org/w/api.php?action=query&titles=%s&prop=links&format=json&pllimit=max", title)
+   ) 
+   
+   type Graph map[string][]string
+   
+   
+   func getLinks(title string) ([]string, error) {
+	// Ubah spasi menjadi underscore
+	title = strings.Replace(title, " ", "_", -1)
+	url := fmt.Sprintf("https://en.wikipedia.org/wiki/%s", title)
+   
+	// Buat request HTTP
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+	 return nil, fmt.Errorf("error fetching page: %w", err)
 	}
 	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+   
+	if resp.StatusCode != 200 {
+	 return nil, fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
 	}
-
-	var wikiResp WikiResponse
-	err = json.Unmarshal(body, &wikiResp)
+   
+	// Parse HTML
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return nil, err
+	 return nil, fmt.Errorf("error parsing page: %w", err)
 	}
-
+   
 	var links []string
-	for _, page := range wikiResp.Query.Pages {
-		for _, link := range page.Links {
-			links = append(links, link.Title)
-		}
-	}
-
+	doc.Find("#mw-content-text a").Each(func(i int, s *goquery.Selection) {
+	 if href, exists := s.Attr("href"); exists {
+	  // Check if the link is an internal wiki link and not an external link or a reference link
+	  if strings.HasPrefix(href, "/wiki/") && !strings.Contains(href, ":") {
+	   linkTitle := strings.TrimPrefix(href, "/wiki/")
+	   links = append(links, linkTitle)
+	  }
+	 }
+	})
+   
 	return links, nil
-}
+   }
 
 func bfs(graph Graph, start, end string) (int, []string, bool) {
 	visited := make(map[string]bool)
