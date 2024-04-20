@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -15,16 +17,30 @@ type Node struct {
 	Children []*Node
 }
 
-func BFS(startURL, endURL string) []string {
+func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 	visited := make(map[string]bool)
 	queue := []*Node{{URL: startURL}}
+	file, err := os.Create("log.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	startTime := time.Now()
+	var articlesVisited, articlesChecked int
 
 	for len(queue) > 0 {
 		current := queue[0]
 		queue = queue[1:]
 
+		msg := fmt.Sprintf("Checking queue for: %s\n", current.URL)
+		fmt.Print(msg)
+		file.WriteString(msg)
+		articlesVisited++
+
 		if current.URL == endURL {
-			return getPath(current)
+			endTime := time.Since(startTime)
+			return getPath(current), articlesVisited, articlesChecked, endTime
 		}
 
 		if visited[current.URL] {
@@ -33,13 +49,29 @@ func BFS(startURL, endURL string) []string {
 		visited[current.URL] = true
 
 		links := getLinks(current.URL)
+		articlesChecked++
+		endFound := false
 		for _, link := range links {
+			msg := fmt.Sprintf("Scraping: %s\n", link)
+			fmt.Print(msg)
+			file.WriteString(msg)
+
+			if link == endURL {
+				endFound = true
+				break
+			}
+
 			child := &Node{URL: link, Parent: current}
 			current.Children = append(current.Children, child)
 			queue = append(queue, child)
 		}
+
+		if endFound {
+			endTime := time.Since(startTime)
+			return getPath(&Node{URL: endURL, Parent: current}), articlesVisited, articlesChecked, endTime
+		}
 	}
-	return nil
+	return nil, articlesVisited, articlesChecked, 0
 }
 
 func getLinks(URL string) []string {
@@ -83,12 +115,12 @@ func getPath(endNode *Node) []string {
 }
 
 func main() {
-	startURL := "https://en.wikipedia.org/wiki/Justification_(epistemology)"
-	endURL := "https://en.wikipedia.org/wiki/Donald_Davidson_(philosopher)"
+	startURL := "https://en.wikipedia.org/wiki/French-suited_playing_cards"
+	endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
 
 	fmt.Println("Finding path from", startURL, "to", endURL)
 
-	path := BFS(startURL, endURL)
+	path, articlesVisited, articlesChecked, execTime := BFS(startURL, endURL)
 	if path == nil {
 		fmt.Println("Path not found!")
 		return
@@ -98,4 +130,8 @@ func main() {
 	for _, link := range path {
 		fmt.Println(link)
 	}
+
+	fmt.Printf("Time taken: %v ms\n", execTime.Milliseconds())
+	fmt.Printf("Articles visited: %d\n", articlesVisited)
+	fmt.Printf("Articles checked: %d\n", articlesChecked)
 }

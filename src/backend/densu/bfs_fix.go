@@ -20,7 +20,7 @@ type Node struct {
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 	visited := make(map[string]bool)
 	queue := []*Node{{URL: startURL}}
-	file, err := os.Create("log-bfs-fix.txt")
+	file, err := os.Create("log.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 		msg := fmt.Sprintf("Checking queue for: %s\n", current.URL)
 		fmt.Print(msg)
 		file.WriteString(msg)
-		articlesChecked++
+		articlesVisited++
 
 		if current.URL == endURL {
 			endTime := time.Since(startTime)
@@ -47,9 +47,9 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 			continue
 		}
 		visited[current.URL] = true
-		articlesVisited++
 
 		links := getLinks(current.URL)
+		articlesChecked++
 		endFound := false
 		for _, link := range links {
 			msg := fmt.Sprintf("Scraping: %s\n", link)
@@ -116,7 +116,7 @@ func getPath(endNode *Node) []string {
 
 func main() {
 	startURL := "https://en.wikipedia.org/wiki/French-suited_playing_cards"
-	endURL := "https://en.wikipedia.org/wiki/Mathematics"
+	endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
 
 	fmt.Println("Finding path from", startURL, "to", endURL)
 
