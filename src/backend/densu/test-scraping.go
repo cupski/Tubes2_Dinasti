@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	startURL := "https://en.wikipedia.org/wiki/Justification_(epistemology)"
+	startURL := "https://en.wikipedia.org/wiki/Contract_bridge"
 
 	fmt.Println("Scraping contents of the start URL:", startURL)
 	startLinks := getLinks(startURL)

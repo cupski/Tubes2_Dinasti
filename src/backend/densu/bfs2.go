@@ -110,8 +110,9 @@ func main() {
 	// startURL := "https://en.wikipedia.org/wiki/Justification_(epistemology)"
 	// endURL := "https://en.wikipedia.org/wiki/Donald_Davidson_(philosopher)"
 
-	startURL := "https://en.wikipedia.org/wiki/Knowledge"
-	endURL := "https://en.wikipedia.org/wiki/Fortune-telling"
+	startURL := "https://en.wikipedia.org/wiki/French-suited_playing_cards"
+	endURL := "https://en.wikipedia.org/wiki/Diplomatic_recognition"
+	
 
 	fmt.Println("Finding path from", startURL, "to", endURL)
 
