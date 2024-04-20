@@ -107,7 +107,7 @@ func getPath(endNode *Node) []string {
 		path = append(path, current.URL)
 		current = current.Parent
 	}
-	// Reverse the path
+	// reverse the path
 	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
 		path[i], path[j] = path[j], path[i]
 	}
@@ -115,8 +115,14 @@ func getPath(endNode *Node) []string {
 }
 
 func main() {
-	startURL := "https://en.wikipedia.org/wiki/French-suited_playing_cards"
-	endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
+	// startURL := "https://en.wikipedia.org/wiki/French-suited_playing_cards"
+	// endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
+
+	// startURL := "https://en.wikipedia.org/wiki/Physics"
+	// endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
+
+	startURL := "https://en.wikipedia.org/wiki/Artificial_intelligence"
+	endURL := "https://en.wikipedia.org/wiki/Power_(physics)"
 
 	fmt.Println("Finding path from", startURL, "to", endURL)
 
