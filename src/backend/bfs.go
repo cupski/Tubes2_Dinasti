@@ -20,7 +20,7 @@ type Node struct {
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 	visited := make(map[string]bool)
 	queue := []*Node{{URL: startURL}}
-	file, err := os.Create("log.txt")
+	file, err := os.Create("log-bfs.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -107,7 +107,7 @@ func getPath(endNode *Node) []string {
 		path = append(path, current.URL)
 		current = current.Parent
 	}
-	// Reverse the path
+	// reverse the path
 	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
 		path[i], path[j] = path[j], path[i]
 	}
@@ -115,23 +115,30 @@ func getPath(endNode *Node) []string {
 }
 
 func main() {
-	startURL := "https://en.wikipedia.org/wiki/French-suited_playing_cards"
-	endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
+	// startURL := "https://en.wikipedia.org/wiki/French-suited_playing_cards"
+	// endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
 
-	fmt.Println("Finding path from", startURL, "to", endURL)
+	// startURL := "https://en.wikipedia.org/wiki/Physics"
+	// endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
+
+	startURL := "https://en.wikipedia.org/wiki/Artificial_intelligence"
+	endURL := "https://en.wikipedia.org/wiki/Power_(physics)"
+
+	fmt.Println("Mencari rute dari", startURL, "ke", endURL)
 
 	path, articlesVisited, articlesChecked, execTime := BFS(startURL, endURL)
 	if path == nil {
-		fmt.Println("Path not found!")
+		fmt.Println("Rute tidak ditemukan!")
 		return
 	}
 
-	fmt.Println("Path found:")
+	fmt.Println("Rute yang ditemukan:")
 	for _, link := range path {
 		fmt.Println(link)
 	}
 
-	fmt.Printf("Time taken: %v ms\n", execTime.Milliseconds())
-	fmt.Printf("Articles visited: %d\n", articlesVisited)
-	fmt.Printf("Articles checked: %d\n", articlesChecked)
+	fmt.Printf("Waktu pencarian: %v ms\n", execTime.Milliseconds())
+	fmt.Printf("Jumlah artikel yang dilalui (visited article(s)): %d\n", articlesVisited)
+	fmt.Printf("Jumlah artikel yang diperiksa (checked article(s)): %d\n", articlesChecked)
+
 }

@@ -20,7 +20,7 @@ type Node struct {
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 	visited := make(map[string]bool)
 	queue := []*Node{{URL: startURL}}
-	file, err := os.Create("log.txt")
+	file, err := os.Create("log-bfs.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
