@@ -1,3 +1,4 @@
+
 package main
 
 import (
@@ -9,44 +10,44 @@ import (
 	"container/list"
    ) 
    
-type Graph map[string][]string
-
-
-func getLinks(title string) ([]string, error) {
-// Ubah spasi menjadi underscore
-title = strings.Replace(title, " ", "_", -1)
-url := fmt.Sprintf("https://en.wikipedia.org/wiki/%s", title)
-
-// Buat request HTTP
-resp, err := http.Get(url)
-if err != nil {
-	return nil, fmt.Errorf("error fetching page: %w", err)
-}
-defer resp.Body.Close()
-
-if resp.StatusCode != 200 {
-	return nil, fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
-}
-
-// Parse HTML
-doc, err := goquery.NewDocumentFromReader(resp.Body)
-if err != nil {
-	return nil, fmt.Errorf("error parsing page: %w", err)
-}
-
-var links []string
-doc.Find("#mw-content-text a").Each(func(i int, s *goquery.Selection) {
-	if href, exists := s.Attr("href"); exists {
-	// Check if the link is an internal wiki link and not an external link or a reference link
-	if strings.HasPrefix(href, "/wiki/") && !strings.Contains(href, ":") {
-	linkTitle := strings.TrimPrefix(href, "/wiki/")
-	links = append(links, linkTitle)
+   type Graph map[string][]string
+   
+   
+   func getLinks(title string) ([]string, error) {
+	// Ubah spasi menjadi underscore
+	title = strings.Replace(title, " ", "_", -1)
+	url := fmt.Sprintf("https://en.wikipedia.org/wiki/%s", title)
+   
+	// Buat request HTTP
+	resp, err := http.Get(url)
+	if err != nil {
+	 return nil, fmt.Errorf("error fetching page: %w", err)
 	}
+	defer resp.Body.Close()
+   
+	if resp.StatusCode != 200 {
+	 return nil, fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
 	}
-})
-
-return links, nil
-}
+   
+	// Parse HTML
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+	 return nil, fmt.Errorf("error parsing page: %w", err)
+	}
+   
+	var links []string
+	doc.Find("#mw-content-text a").Each(func(i int, s *goquery.Selection) {
+	 if href, exists := s.Attr("href"); exists {
+	  // Check if the link is an internal wiki link and not an external link or a reference link
+	  if strings.HasPrefix(href, "/wiki/") && !strings.Contains(href, ":") {
+	   linkTitle := strings.TrimPrefix(href, "/wiki/")
+	   links = append(links, linkTitle)
+	  }
+	 }
+	})
+   
+	return links, nil
+   }
 
 func bfs(graph Graph, start, end string) (int, []string, bool) {
 visited := make(map[string]bool)
