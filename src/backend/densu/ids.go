@@ -15,6 +15,7 @@ type Node struct {
 	URL      string
 	Parent   *Node
 	Children []*Node
+	Depth    int
 }
 
 func IDS(startURL, endURL string) ([]string, int, int, time.Duration) {
@@ -41,7 +42,7 @@ func IDS(startURL, endURL string) ([]string, int, int, time.Duration) {
 
 func DLS(startURL, endURL string, depthLimit int) ([]string, int, int) {
 	visited := make(map[string]bool)
-	stack := []*Node{{URL: startURL}}
+	stack := []*Node{{URL: startURL, Depth: 0}}
 	file, err := os.Create("log-ids.txt")
 	if err != nil {
 		log.Fatal(err)
@@ -63,7 +64,7 @@ func DLS(startURL, endURL string, depthLimit int) ([]string, int, int) {
 			return getPath(current), articlesVisited, articlesChecked
 		}
 
-		if visited[current.URL] || current.Parent != nil && len(current.Parent.Children) >= depthLimit {
+		if visited[current.URL] || current.Depth >= depthLimit {
 			continue
 		}
 		visited[current.URL] = true
@@ -75,7 +76,7 @@ func DLS(startURL, endURL string, depthLimit int) ([]string, int, int) {
 			fmt.Print(msg)
 			file.WriteString(msg)
 
-			child := &Node{URL: link, Parent: current}
+			child := &Node{URL: link, Parent: current, Depth: current.Depth + 1}
 			current.Children = append(current.Children, child)
 			stack = append(stack, child)
 		}
@@ -125,17 +126,8 @@ func getPath(endNode *Node) []string {
 }
 
 func main() {
-	// startURL := "https://en.wikipedia.org/wiki/Artificial_intelligence"
-	// endURL := "https://en.wikipedia.org/wiki/Power_(physics)"
-
-	// startURL := "https://en.wikipedia.org/wiki/Mathematics"
-    // endURL := "https://en.wikipedia.org/wiki/Algebra"
-
-	// startURL := "https://en.wikipedia.org/wiki/French-suited_playing_cards"
-    // endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
-
-	startURL := "https://en.wikipedia.org/wiki/Knowledge" 
-	endURL := "https://en.wikipedia.org/wiki/Fortune-telling"
+	startURL := "https://en.wikipedia.org/wiki/Artificial_intelligence"
+	endURL := "https://en.wikipedia.org/wiki/Power_(physics)"
 
 	fmt.Println("Mencari rute dari", startURL, "ke", endURL)
 
