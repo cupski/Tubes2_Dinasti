@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './styles.css';
-import luffy_img from './assets/luffy.png'
 import ids_title from './assets/ids-text.png'
+import { useNavigate } from 'react-router-dom';
 
 
 const IDSPage = () => {
@@ -12,6 +12,12 @@ const IDSPage = () => {
     const handleSearch = () => {
         // seach logic disini, masih bingung.
         setResult(`Results for IDS with start point "${startPoint}" and end point "${endPoint}"`);
+    };
+
+    const navigate = useNavigate();
+
+    const handleBack = () => {
+        navigate('/');
     };
 
     return (
@@ -31,8 +37,11 @@ const IDSPage = () => {
             <div className="result-container">
                 <p>{result}</p>
             </div>
-            {/* <img src={luffy_img} alt="Luffy" className="bottom-corner-image" /> */}
-
+            <div>
+                <button className="back-button3" onClick={handleBack}>
+                            Back
+                </button>
+            </div>
         </div>
     );
 }

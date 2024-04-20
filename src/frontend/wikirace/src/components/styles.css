@@ -17,7 +17,7 @@ body {
 .page-container {
     display: flex;
     flex-direction: column;
-    min-height: 140vh;
+    min-height: 150vh;
 }
 
 .header-container {
@@ -226,7 +226,7 @@ body {
     width: 35%;
     height: 200px;
     border-radius: 8px;
-    margin-top: 1050px;
+    margin-top: 1100px;
     margin-left: 180px;
     margin-right: 180px;
     position: relative;
@@ -504,4 +504,19 @@ body {
     inset 0 0 0 8px rgba(225, 155, 4, 0.946);
     margin-top: 30px;
     margin-left: 350px;
+}
+
+.back-button3 {
+    padding: 10px 20px;
+    background-color: rgba(225, 155, 4, 0.946);
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    box-shadow: 
+        inset 0 0 0 3px rgba(225, 155, 4, 0.946),
+        inset 0 0 0 5px #34749e;
+    margin-top: 30px;
 }

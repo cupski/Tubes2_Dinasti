@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './styles.css';
-import chopper_img from './assets/chopper.png'
 import bfs_title from './assets/bfs-text.png'
+import { useNavigate } from 'react-router-dom';
 
 const BFSPage = () => {
     const [startPoint, setStartPoint] = useState("");
@@ -11,6 +11,12 @@ const BFSPage = () => {
     const handleSearch = () => {
         // seach logic disini, masih bingung.
         setResult(`Results for BFS with start point "${startPoint}" and end point "${endPoint}"`);
+    };
+
+    const navigate = useNavigate();
+
+    const handleBack = () => {
+        navigate('/');
     };
 
     return (
@@ -30,7 +36,11 @@ const BFSPage = () => {
             <div className="result-container">
                 <p>{result}</p>
             </div>
-            {/* <img src={chopper_img} alt="Chopper" className="bottom-corner-image" /> */}
+            <div>
+                <button className="back-button3" onClick={handleBack}>
+                            Back
+                </button>
+            </div>
         </div>
     );
 }
