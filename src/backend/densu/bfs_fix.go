@@ -122,7 +122,7 @@ func main() {
 	// endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
 
 	startURL := "https://en.wikipedia.org/wiki/Artificial_intelligence"
-	endURL := "https://en.wikipedia.org/wiki/Power_(physics)"
+	endURL := "https://en.wikipedia.org/wiki/Physics"
 
 	fmt.Println("Mencari rute dari", startURL, "ke", endURL)
 

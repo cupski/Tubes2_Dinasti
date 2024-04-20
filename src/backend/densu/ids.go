@@ -135,8 +135,11 @@ func main() {
 	// startURL := "https://en.wikipedia.org/wiki/Justification_(epistemology)"
 	// endURL := "https://en.wikipedia.org/wiki/Donald_Davidson_(philosopher)"
 
-	startURL := "https://en.wikipedia.org/wiki/Knowledge" 
-	endURL := "https://en.wikipedia.org/wiki/Fortune-telling"
+	// startURL := "https://en.wikipedia.org/wiki/Knowledge" 
+	// endURL := "https://en.wikipedia.org/wiki/Fortune-telling"
+
+	startURL := "https://en.wikipedia.org/wiki/Artificial_intelligence"
+	endURL := "https://en.wikipedia.org/wiki/Physics"
 
 	fmt.Println("Mencari rute dari", startURL, "ke", endURL)
 
