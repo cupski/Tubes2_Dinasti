@@ -30,12 +30,12 @@ const AboutUsPage = () => {
                     <p>NIM: 13522013</p>
                 </div>
                 <div className="character-card">
-                    <img src={luffy} alt="Monkey D. Luffy" className="luffy-img"/>
+                    <img src={zoro} alt="Roronoa Zoro" className="zoro-img" />
                     <h3>Muhammad Yusuf Rafi</h3>
                     <p>NIM: 13522009</p>
                 </div>
                 <div className="character-card">
-                    <img src={zoro} alt="Roronoa Zoro" className="zoro-img" />
+                    <img src={luffy} alt="Monkey D. Luffy" className="luffy-img"/>
                     <h3>Rafii Ahmad Fahreza</h3>
                     <p>NIM: 10023570</p>
                 </div>
