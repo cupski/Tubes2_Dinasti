@@ -115,14 +115,14 @@ func getPath(endNode *Node) []string {
 }
 
 func main() {
-	// startURL := "https://en.wikipedia.org/wiki/French-suited_playing_cards"
-	// endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
+	startURL := "https://en.wikipedia.org/wiki/French-suited_playing_cards"
+	endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
 
 	// startURL := "https://en.wikipedia.org/wiki/Physics"
 	// endURL := "https://en.wikipedia.org/wiki/Indian_Premier_League"
 
-	startURL := "https://en.wikipedia.org/wiki/Artificial_intelligence"
-	endURL := "https://en.wikipedia.org/wiki/Power_(physics)"
+	// startURL := "https://en.wikipedia.org/wiki/Artificial_intelligence"
+	// endURL := "https://en.wikipedia.org/wiki/Power_(physics)"
 
 	fmt.Println("Mencari rute dari", startURL, "ke", endURL)
 
