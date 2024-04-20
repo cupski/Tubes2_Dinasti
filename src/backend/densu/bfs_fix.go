@@ -124,20 +124,21 @@ func main() {
 	startURL := "https://en.wikipedia.org/wiki/Artificial_intelligence"
 	endURL := "https://en.wikipedia.org/wiki/Power_(physics)"
 
-	fmt.Println("Finding path from", startURL, "to", endURL)
+	fmt.Println("Mencari rute dari", startURL, "ke", endURL)
 
 	path, articlesVisited, articlesChecked, execTime := BFS(startURL, endURL)
 	if path == nil {
-		fmt.Println("Path not found!")
+		fmt.Println("Rute tidak ditemukan!")
 		return
 	}
 
-	fmt.Println("Path found:")
+	fmt.Println("Rute yang ditemukan:")
 	for _, link := range path {
 		fmt.Println(link)
 	}
 
-	fmt.Printf("Time taken: %v ms\n", execTime.Milliseconds())
-	fmt.Printf("Articles visited: %d\n", articlesVisited)
-	fmt.Printf("Articles checked: %d\n", articlesChecked)
+	fmt.Printf("Waktu pencarian: %v ms\n", execTime.Milliseconds())
+	fmt.Printf("Jumlah artikel yang dilalui (visited article(s)): %d\n", articlesVisited)
+	fmt.Printf("Jumlah artikel yang diperiksa (checked article(s)): %d\n", articlesChecked)
+
 }
