@@ -50,7 +50,7 @@ const BFSPageWOHeader = () => {
 
 const HowToUse = () => {
   return (
-    <div className="page-container">
+    <div className="how-to-use-container">
       <HowToUsePage />
     </div>
   );

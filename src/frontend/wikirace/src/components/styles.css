@@ -257,56 +257,161 @@ body {
 }
 
 /* how to use page */
+
+.how-to-use-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 120vh;
+}
+
 .container {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    margin-top: 100px;
 }
 
 .island1 {
     position: absolute;
-    left: 180px;
+    left: 70px;
+    top: 110px;
     width: 300px;
     height: auto;
 }
 
 .step1 {
     position: absolute;
-    top: 60px/* Adjust this value to position the step image vertically */;
-    left: 480px/* Adjust this value to position the step image horizontally */;
+    top: 160px;
+    left: 370px;
     height: 70px;
     width: auto;
 }
 
 .line1to2 {
     position: absolute;
-    top: 75px;
-    left: 800px;
+    top: 170px;
+    left: 710px;
     width: 100px;
     height: auto;
 }
 
 .island2 {
     position: absolute;
-    top: 150px;
-    left: 820px;
+    top: 250px;
+    left: 710px;
     width: 300px;
     height: auto;
 }
 
 .step2 {
     position: absolute;
-    top: 225px;
-    left: 655px;
+    top: 330px;
+    left: 545px;
     height: 50px;
     width: auto;
 }
 
 .line2to3 {
     position: absolute;
-    top: 230px;
-    left: 400px;
+    top: 320px;
+    left: 290px;
     width: 200px;
     height: auto;
+}
+
+.island3 {
+    position: absolute;
+    top: 350px;
+    left: 80px;
+    width: 200px;
+    height: auto;
+}
+
+.step3 {
+    position: absolute;
+    top: 425px;
+    left: 280px;
+    height: 50px;
+    width: auto;
+}
+
+.line3to4 {
+    position: absolute;
+    top: 500px;
+    left: 340px;
+    width: 150px;
+    height: auto;
+}
+
+.island4 {
+    position: absolute;
+    top: 460px;
+    left: 730px;
+    width: 150px;
+    height: auto;
+}
+
+.step4 {
+    position: absolute;
+    top: 530px;
+    left: 535px;
+    height: 45px;
+    width: auto;
+}
+
+.line4to5 {
+    position: absolute;
+    top: 630px;
+    left: 720px;
+    width: 80px;
+    height: auto;
+}
+
+.island5 {
+    position: absolute;
+    top: 680px;
+    left: 340px;
+    width: 350px;
+    height: auto;
+}
+
+.step5 {
+    position: absolute;
+    top: 660px;
+    left: 450px;
+    height: 25px;
+    width: auto;
+}
+
+.pirate-ship {
+    position: absolute;
+    top: 300px;
+    left: 970px;
+    width: 350px;
+    height: auto;
+}
+
+.how-to-use-title {
+    position: absolute;
+    top: 60px;
+    left: 900px;
+    height: 90px;
+    width: auto;
+}
+
+.back-button {
+    padding: 20px 30px;
+    background-color: #841a1e;
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    box-shadow: 
+    inset 0 0 0 5px #841a1e,
+    inset 0 0 0 8px rgba(225, 155, 4, 0.946);
+    margin-top: 70px;
+    margin-left: 1130px;
 }

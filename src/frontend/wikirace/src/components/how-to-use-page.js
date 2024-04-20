@@ -14,10 +14,25 @@ import line1to2 from './assets/1to2.png';
 import line2to3 from './assets/2to3.png';
 import line3to4 from './assets/3to4.png';
 import line4to5 from './assets/4to5.png';
+import ship from './assets/pirate-ship.png';
+import title from './assets/how-to-use-title.png';
+import { useNavigate } from 'react-router-dom';
 
 const HowToUsePage = () => {
+    const navigate = useNavigate();
+
+    const handleBack = () => {
+        navigate('/');
+    };
     return (
         <div className="container">
+            <div>
+                <img src={title} alt="Title" className="how-to-use-title"/>
+                <button className="back-button" onClick={handleBack}>
+                            Back
+                </button>
+            </div>
+
             <div>
                 <img src={island1} alt="Island 1" className="island1"/>
             </div>
@@ -36,6 +51,37 @@ const HowToUsePage = () => {
             </div>
             <div>
                 <img src={line2to3} alt="Line 2 to 3" className="line2to3"/>
+            </div>
+
+            <div>
+                <img src={island3} alt="Island 3" className="island3"/>
+            </div>
+            <div>
+                <img src={step3} alt="Step 3" className="step3"/>
+            </div>
+            <div>
+                <img src={line3to4} alt="Line 3 to 4" className="line3to4"/>
+            </div>
+
+            <div>
+                <img src={island4} alt="Island 4" className="island4"/>
+            </div>
+            <div>
+                <img src={step4} alt="Step 4" className="step4"/>
+            </div>
+            <div>
+                <img src={line4to5} alt="Line 4 to 5" className="line4to5"/>
+            </div>
+
+            <div>
+                <img src={island5} alt="Island 5" className="island5"/>
+            </div>
+            <div>
+                <img src={step5} alt="Step 5" className="step5"/>
+            </div>
+
+            <div>
+                <img src={ship} alt="Ship" className="pirate-ship"/>
             </div>
         </div>
     );
