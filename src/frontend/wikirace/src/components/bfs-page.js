@@ -9,18 +9,38 @@ const BFSPage = () => {
     const [result, setResult] = useState(null);
     const [isLoading, setIsLoading] = useState(false); // Add loading state
 
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+    //     setIsLoading(true); // Set loading state to true
+    //     try {
+    //         const response = await fetch(`http://localhost:8080/shortestpath?start=${startArticle}&target=${targetArticle}`);
+    //         const data = await response.json();
+    //         setResult(data);
+    //         setIsLoading(false); // Set loading state to false after data is fetched
+    //         console.log('Data fetched successfully:', data); // Log success message
+    //     } catch (error) {
+    //         console.error('Error fetching data:', error); // Log error message
+    //         setIsLoading(false); // Set loading state to false in case of error
+    //     }
+    // };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true); // Set loading state to true
+        setIsLoading(true);
         try {
-            const response = await fetch(`http://localhost:8080/shortestpath?start=${startArticle}&target=${targetArticle}`);
+            // Construct full URLs
+            const fullStartArticleURL = `https://en.wikipedia.org/wiki/${startArticle}`;
+            const fullTargetArticleURL = `https://en.wikipedia.org/wiki/${targetArticle}`;
+    
+            // Make API request with full URLs
+            const response = await fetch(`http://localhost:8080/shortestpath?start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
             const data = await response.json();
             setResult(data);
-            setIsLoading(false); // Set loading state to false after data is fetched
-            console.log('Data fetched successfully:', data); // Log success message
+            setIsLoading(false);
+            console.log('Data fetched successfully:', data);
         } catch (error) {
-            console.error('Error fetching data:', error); // Log error message
-            setIsLoading(false); // Set loading state to false in case of error
+            console.error('Error fetching data:', error);
+            setIsLoading(false);
         }
     };
 

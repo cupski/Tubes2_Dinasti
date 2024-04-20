@@ -9,6 +9,7 @@ import (
     "time"
 
     "github.com/PuerkitoBio/goquery"
+	"github.com/rs/cors"
 )
 
 type Node struct {
@@ -107,13 +108,29 @@ func getPath(endNode *Node) []string {
     return path
 }
 
+func extractArticleName(url string) string {
+    parts := strings.Split(url, "/")
+    return parts[len(parts)-1]
+}
+
 func BFSHandler(w http.ResponseWriter, r *http.Request) {
-    startArticle := r.URL.Query().Get("start")
+    // startArticle := r.URL.Query().Get("start")
+    // targetArticle := r.URL.Query().Get("target")
+
+    // log.Printf("Received request: startArticle=%s, targetArticle=%s\n", startArticle, targetArticle)
+
+	startArticle := r.URL.Query().Get("start")
     targetArticle := r.URL.Query().Get("target")
 
-    log.Printf("Received request: startArticle=%s, targetArticle=%s\n", startArticle, targetArticle)
+    startArticleName := extractArticleName(startArticle)
+    targetArticleName := extractArticleName(targetArticle)
 
-    path, articlesVisited, articlesChecked, execTime := BFS(startArticle, targetArticle)
+    fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
+    fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
+
+    path, articlesVisited, articlesChecked, execTime := BFS(fullStartURL, fullTargetURL)
+
+    // path, articlesVisited, articlesChecked, execTime := BFS(startArticle, targetArticle)
     if path == nil {
         http.Error(w, "Route not found", http.StatusNotFound)
         return
@@ -123,12 +140,15 @@ func BFSHandler(w http.ResponseWriter, r *http.Request) {
     log.Printf("Articles visited: %d\n", articlesVisited)
     log.Printf("Articles checked: %d\n", articlesChecked)
     log.Printf("Execution time: %v\n", execTime)
-    
+
+    // Convert execution time from nanoseconds to milliseconds
+    execTimeDuration := time.Duration(execTime.Nanoseconds() / int64(time.Millisecond))
+
     result := BFSResult{
         Path:            path,
         ArticlesVisited: articlesVisited,
         ArticlesChecked: articlesChecked,
-        ExecutionTime:   execTime,
+        ExecutionTime:   execTimeDuration,
     }
 
     jsonResponse, err := json.Marshal(result)
@@ -141,10 +161,17 @@ func BFSHandler(w http.ResponseWriter, r *http.Request) {
     w.Write(jsonResponse)
 }
 
-
-
 func main() {
+    // Create a new CORS handler allowing requests from localhost:3000
+    corsHandler := cors.New(cors.Options{
+        AllowedOrigins:   []string{"http://localhost:3000"},
+        AllowCredentials: true,
+    })
+
+    // Wrap the default ServeMux with the CORS handler
+    handler := corsHandler.Handler(http.DefaultServeMux)
+
     http.HandleFunc("/shortestpath", BFSHandler)
     fmt.Println("Server listening on port 8080...")
-    log.Fatal(http.ListenAndServe(":8080", nil))
+    log.Fatal(http.ListenAndServe(":8080", handler))
 }

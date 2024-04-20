@@ -224,7 +224,7 @@ body {
     background: linear-gradient(to bottom, #a81e23, #841a1e);
     padding: 300px;
     width: 35%;
-    height: 200px;
+    max-height: 80px;
     border-radius: 8px;
     margin-top: 1100px;
     margin-left: 180px;
@@ -519,4 +519,12 @@ body {
         inset 0 0 0 3px rgba(225, 155, 4, 0.946),
         inset 0 0 0 5px #34749e;
     margin-top: 30px;
+}
+
+a {
+    color: white;
+}
+
+a:visited {
+    color: rgba(225, 155, 4, 0.946);
 }
