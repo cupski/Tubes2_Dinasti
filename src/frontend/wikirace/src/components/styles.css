@@ -528,3 +528,7 @@ a {
 a:visited {
     color: rgba(225, 155, 4, 0.946);
 }
+
+.node text {
+    fill: white !important;
+}

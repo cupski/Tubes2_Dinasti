@@ -1,28 +1,15 @@
 import React, { useState } from 'react';
 import './styles.css';
-import bfs_title from './assets/bfs-text.png'
+import bfs_title from './assets/bfs-text.png';
 import { useNavigate } from 'react-router-dom';
+import { Graph } from 'react-d3-graph';
 
 const BFSPage = () => {
     const [startArticle, setStartArticle] = useState('');
     const [targetArticle, setTargetArticle] = useState('');
     const [result, setResult] = useState(null);
-    const [isLoading, setIsLoading] = useState(false); // Add loading state
-
-    // const handleSubmit = async (e) => {
-    //     e.preventDefault();
-    //     setIsLoading(true); // Set loading state to true
-    //     try {
-    //         const response = await fetch(`http://localhost:8080/shortestpath?start=${startArticle}&target=${targetArticle}`);
-    //         const data = await response.json();
-    //         setResult(data);
-    //         setIsLoading(false); // Set loading state to false after data is fetched
-    //         console.log('Data fetched successfully:', data); // Log success message
-    //     } catch (error) {
-    //         console.error('Error fetching data:', error); // Log error message
-    //         setIsLoading(false); // Set loading state to false in case of error
-    //     }
-    // };
+    const [isLoading, setIsLoading] = useState(false);
+    const [graphData, setGraphData] = useState(null);
 
     const handleBFSClick = async (e) => {
         e.preventDefault();
@@ -33,10 +20,20 @@ const BFSPage = () => {
             const fullTargetArticleURL = `https://en.wikipedia.org/wiki/${targetArticle}`;
     
             // Make API request with full URLs
-            // const response = await fetch(`http://localhost:8080/shortestpath?start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
             const response = await fetch(`http://localhost:8080/shortestpath?algorithm=bfs&start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
             const data = await response.json();
+
+            // Transform data into graph format
+            const graphNodes = data.path.map((url) => ({ id: url, label: url }));
+            const graphLinks = data.path.slice(0, -1).map((url, index) => ({ source: url, target: data.path[index + 1] }));
+
+            const graphData = {
+                nodes: graphNodes,
+                links: graphLinks
+            };
+
             setResult(data);
+            setGraphData(graphData);
             setIsLoading(false);
             console.log('Data fetched successfully:', data);
         } catch (error) {
@@ -71,16 +68,31 @@ const BFSPage = () => {
                 ) : result ? (
                     <div>
                         <h2>Result</h2>
-                        <ul>
+                        <ol>
                             {result.path.map((url, index) => (
                                 <li key={index}>
                                     <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>
                                 </li>
                             ))}
-                        </ul>
+                        </ol>
                         <p>Articles Visited: {result.articlesVisited}</p>
                         <p>Articles Checked: {result.articlesChecked}</p>
                         <p>Execution Time: {result.executionTime} ms</p>
+                        {graphData && (
+                            <div className="graph-container">
+                                <Graph
+                                    id="graph-id" // id is mandatory
+                                    data={graphData}
+                                    config={{
+                                        node: {
+                                            size: 1000,
+                                            highlightStrokeColor: 'blue'
+                                        },
+                                        link: { highlightColor: 'lightblue' }
+                                    }}
+                                />
+                            </div>
+                        )}
                     </div>
                 ) : null}
             </div>
