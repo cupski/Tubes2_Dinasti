@@ -28,9 +28,13 @@ type ShortestPathResult struct {
 }
 
 func BFSHandler(w http.ResponseWriter, r *http.Request) {
+    
     startArticle := r.URL.Query().Get("start")
     targetArticle := r.URL.Query().Get("target")
-
+    
+    fmt.Println(startArticle)
+    fmt.Println(targetArticle)
+    
     startArticleName := extractArticleName(startArticle)
     targetArticleName := extractArticleName(targetArticle)
 

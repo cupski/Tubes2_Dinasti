@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './styles.css';
 import bfs_title from './assets/bfs-text.png';
 import { useNavigate } from 'react-router-dom';
@@ -10,14 +10,45 @@ const BFSPage = () => {
     const [result, setResult] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [graphData, setGraphData] = useState(null);
+    const [startSuggestions, setStartSuggestions] = useState([]);
+    const [targetSuggestions, setTargetSuggestions] = useState([]);
 
+    const fetchSuggestions = async (input, setSuggestions) => {
+        try {
+            const response = await fetch(
+                `https://en.wikipedia.org/w/api.php?action=opensearch&limit=10&format=json&search=${input}&origin=*`
+              );
+            const data = await response.json();
+            const suggestions = data[1] || [];
+            setSuggestions(suggestions);
+        } catch (error) {
+            console.error('Error fetching suggestions:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (startArticle.trim() !== '') {
+            fetchSuggestions(startArticle, setStartSuggestions);
+        }
+    }, [startArticle]);
+
+    useEffect(() => {
+        if (targetArticle.trim() !== '') {
+            fetchSuggestions(targetArticle, setTargetSuggestions);
+        }
+    }, [targetArticle]);
+    
     const handleBFSClick = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         try {
             // Construct full URLs
-            const fullStartArticleURL = `https://en.wikipedia.org/wiki/${startArticle}`;
-            const fullTargetArticleURL = `https://en.wikipedia.org/wiki/${targetArticle}`;
+
+            const formattedStartArticle = startArticle.replace(/ /g, '_');
+            const formattedTargetArticle = targetArticle.replace(/ /g, '_');
+
+            const fullStartArticleURL = `https://en.wikipedia.org/wiki/${formattedStartArticle}`;
+            const fullTargetArticleURL = `https://en.wikipedia.org/wiki/${formattedTargetArticle}`;
     
             // Make API request with full URLs
             const response = await fetch(`http://localhost:8080/shortestpath?algorithm=bfs&start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
@@ -35,7 +66,6 @@ const BFSPage = () => {
             setResult(data);
             setGraphData(graphData);
             setIsLoading(false);
-            console.log('Data fetched successfully:', data);
         } catch (error) {
             console.error('Error fetching data:', error);
             setIsLoading(false);
@@ -53,11 +83,41 @@ const BFSPage = () => {
             <img src={bfs_title} alt="BFS TITLE" className='header-bfs'/>
             <div className="start-container">
                 <p style={{ fontFamily: 'Comic Sans MS', fontSize: '16px', marginBottom: '5px' }}>Enter Start Point:</p>
-                <input type="text" value={startArticle} onChange={(e) => setStartArticle(e.target.value)} placeholder="Start Point" />
+                <div className="input-select-container">
+                    <input
+                        type="text"
+                        value={startArticle}
+                        onChange={(e) => setStartArticle(e.target.value)}
+                        placeholder="Enter Start Point"
+                    />
+                    <select value={startArticle} onChange={(e) => setStartArticle(e.target.value)}>
+                        <option value="">Select Start Point</option>
+                        {startSuggestions
+                            .filter(suggestion => suggestion.toLowerCase().includes(startArticle.toLowerCase()))
+                            .map((suggestion, index) => (
+                                <option key={index} value={suggestion}>{suggestion}</option>
+                            ))}
+                    </select>
+                </div>
             </div>
             <div className="end-container">
                 <p style={{ fontFamily: 'Comic Sans MS', fontSize: '16px', marginBottom: '5px' }}>Enter End Point:</p>
-                <input type="text" value={targetArticle} onChange={(e) => setTargetArticle(e.target.value)} placeholder="End Point" />
+                <div className="input-select-container">
+                    <input
+                        type="text"
+                        value={targetArticle}
+                        onChange={(e) => setTargetArticle(e.target.value)}
+                        placeholder="Enter End Point"
+                    />
+                    <select value={targetArticle} onChange={(e) => setTargetArticle(e.target.value)}>
+                        <option value="">Select End Point</option>
+                        {targetSuggestions
+                            .filter(suggestion => suggestion.toLowerCase().includes(targetArticle.toLowerCase()))
+                            .map((suggestion, index) => (
+                                <option key={index} value={suggestion}>{suggestion}</option>
+                            ))}
+                    </select>
+                </div>
             </div>
             <div className="search-container">
                 <button onClick={handleBFSClick}>Search</button>
@@ -98,7 +158,7 @@ const BFSPage = () => {
             </div>
             <div>
                 <button className="back-button3" onClick={handleBack}>
-                            Back
+                    Back
                 </button>
             </div>
         </div>

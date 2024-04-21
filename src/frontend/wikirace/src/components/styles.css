@@ -17,7 +17,7 @@ body {
 .page-container {
     display: flex;
     flex-direction: column;
-    min-height: 150vh;
+    min-height: 165vh;
 }
 
 .header-container {
@@ -175,14 +175,14 @@ body {
 
 .end-container {
     position: absolute;
-    top: 31%;
+    top: 35%;
     left: 50%;
     transform: translate(-50%, -50%);
 }
 
 .search-container {
     position: absolute;
-    top: 38%;
+    top: 48%;
     left: 50%;
     transform: translate(-50%, -50%);
 }
@@ -226,7 +226,7 @@ body {
     width: 35%;
     max-height: 80px;
     border-radius: 8px;
-    margin-top: 1100px;
+    margin-top: 1300px;
     margin-left: 180px;
     margin-right: 180px;
     position: relative;
@@ -533,3 +533,37 @@ a:visited {
     fill: white !important;
     font-size: 12px;
 }
+
+/* suggestion lists */
+.suggestion-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+.suggestion-list li {
+cursor: pointer;
+padding: 8px 12px;
+background-color: #f8f9fa;
+border: 1px solid #ced4da;
+border-radius: 4px;
+margin-bottom: 4px;
+}
+
+.suggestion-list li:hover {
+background-color: #e9ecef;
+}
+
+.input-select-container {
+    position: relative;
+    display: inline-block;
+}
+
+.input-select-container select {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    width: 100%;
+    z-index: 1;
+}
+  
