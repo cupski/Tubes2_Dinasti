@@ -531,4 +531,5 @@ a:visited {
 
 .node text {
     fill: white !important;
+    font-size: 12px;
 }
