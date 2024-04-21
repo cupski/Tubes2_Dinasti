@@ -5,213 +5,277 @@ import (
     "fmt"
     "log"
     "net/http"
+    "os"
     "strings"
     "time"
-	"container/list"
 
     "github.com/PuerkitoBio/goquery"
+    "github.com/rs/cors"
 )
 
-// Graph represents the adjacency list of a graph
-type Graph map[string][]string
-
-// ShortestPathResponse represents the response structure for the shortest path
-type ShortestPathResponse struct {
-    Checked      int      `json:"checked"`
-    Path         []string `json:"path"`
-    SearchTimeMs int64    `json:"search_time_ms"`
-    Error        string   `json:"error,omitempty"`
+type Node struct {
+    URL      string
+    Parent   *Node
+    Children []*Node
+    Depth    int
 }
 
-func addCorsHeaders(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		h.ServeHTTP(w, r)
-	})
+type ShortestPathResult struct {
+    Path            []string      `json:"path"`
+    ArticlesVisited int           `json:"articlesVisited"`
+    ArticlesChecked int           `json:"articlesChecked"`
+    ExecutionTime   time.Duration `json:"executionTime"`
 }
 
-func main() {
-	mux := http.NewServeMux()
-    mux.HandleFunc("/shortestpath", shortestPathHandler)
-
-    // Apply CORS middleware
-    corsMux := addCorsHeaders(mux)
-
-    log.Fatal(http.ListenAndServe(":8080", corsMux))
-}
-
-func shortestPathHandler(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodGet {
-        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-        return
-    }
-
+func BFSHandler(w http.ResponseWriter, r *http.Request) {
     startArticle := r.URL.Query().Get("start")
-    endArticle := r.URL.Query().Get("target")
+    targetArticle := r.URL.Query().Get("target")
 
-    if startArticle == "" || endArticle == "" {
-        http.Error(w, "Start and target articles are required", http.StatusBadRequest)
+    startArticleName := extractArticleName(startArticle)
+    targetArticleName := extractArticleName(targetArticle)
+
+    fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
+    fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
+
+    path, articlesVisited, articlesChecked, execTime := BFS(fullStartURL, fullTargetURL)
+
+    if path == nil {
+        http.Error(w, "Route not found", http.StatusNotFound)
         return
     }
 
-    graph := make(Graph)
-    links, err := getLinks(startArticle)
+    execTimeDuration := time.Duration(execTime.Nanoseconds() / int64(time.Millisecond))
+
+    result := ShortestPathResult{
+        Path:            path,
+        ArticlesVisited: articlesVisited,
+        ArticlesChecked: articlesChecked,
+        ExecutionTime:   execTimeDuration,
+    }
+
+    jsonResponse, err := json.Marshal(result)
     if err != nil {
-        http.Error(w, fmt.Sprintf("Failed to get links for start article: %v", err), http.StatusInternalServerError)
-        return
-    }
-    graph[startArticle] = links
-
-    startTime := time.Now()
-
-    checked, path, found := bfs(graph, startArticle, endArticle)
-
-    elapsed := time.Since(startTime)
-
-    response := ShortestPathResponse{
-        Checked:      checked,
-        Path:         path,
-        SearchTimeMs: elapsed.Milliseconds(),
-    }
-
-    if !found {
-        response.Error = "Target article not found."
-    }
-
-    jsonResponse, err := json.Marshal(response)
-    if err != nil {
-        http.Error(w, fmt.Sprintf("Error encoding JSON response: %v", err), http.StatusInternalServerError)
+        http.Error(w, "Unable to marshal JSON response", http.StatusInternalServerError)
         return
     }
 
     w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
     w.Write(jsonResponse)
 }
 
-func getLinks(title string) ([]string, error) {
-	fmt.Println(title)
-    title = strings.Replace(title, " ", "_", -1)
-    url := fmt.Sprintf("https://en.wikipedia.org/wiki/%s", title)
+func IDSHandler(w http.ResponseWriter, r *http.Request) {
+    startArticle := r.URL.Query().Get("start")
+    targetArticle := r.URL.Query().Get("target")
 
-    resp, err := http.Get(url)
+    startArticleName := extractArticleName(startArticle)
+    targetArticleName := extractArticleName(targetArticle)
+
+    fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
+    fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
+
+    path, articlesVisited, articlesChecked, execTime := IDS(fullStartURL, fullTargetURL)
+
+    if path == nil {
+        http.Error(w, "Route not found", http.StatusNotFound)
+        return
+    }
+
+    execTimeDuration := time.Duration(execTime.Nanoseconds() / int64(time.Millisecond))
+
+    result := ShortestPathResult{
+        Path:            path,
+        ArticlesVisited: articlesVisited,
+        ArticlesChecked: articlesChecked,
+        ExecutionTime:   execTimeDuration,
+    }
+
+    jsonResponse, err := json.Marshal(result)
     if err != nil {
-        return nil, fmt.Errorf("error fetching page: %w", err)
+        http.Error(w, "Unable to marshal JSON response", http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    w.Write(jsonResponse)
+}
+
+func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
+    visited := make(map[string]bool)
+    queue := []*Node{{URL: startURL}}
+    start := time.Now()
+    var articlesVisited, articlesChecked int
+
+    for len(queue) > 0 {
+        current := queue[0]
+        queue = queue[1:]
+        articlesVisited++
+
+        if current.URL == endURL {
+            end := time.Since(start)
+            return getPath(current), articlesVisited, articlesChecked, end
+        }
+
+        if visited[current.URL] {
+            continue
+        }
+        visited[current.URL] = true
+
+        links := getLinks(current.URL)
+        articlesChecked++
+        endFound := false
+        for _, link := range links {
+            if link == endURL {
+                endFound = true
+                break
+            }
+
+            child := &Node{URL: link, Parent: current}
+            current.Children = append(current.Children, child)
+            queue = append(queue, child)
+        }
+
+        if endFound {
+            end := time.Since(start)
+            return getPath(&Node{URL: endURL, Parent: current}), articlesVisited, articlesChecked, end
+        }
+    }
+    return nil, articlesVisited, articlesChecked, 0
+}
+
+
+func IDS(startURL, endURL string) ([]string, int, int, time.Duration) {
+    startTime := time.Now()
+    var path []string
+    var articlesVisited, articlesChecked int
+    var depthLimit int
+
+    for {
+        path, articlesVisited, articlesChecked = DLS(startURL, endURL, depthLimit)
+        if path != nil || time.Since(startTime).Seconds() > 60 {
+            break
+        }
+        depthLimit++
+    }
+
+    if path == nil {
+        return nil, articlesVisited, articlesChecked, 0
+    }
+
+    execTime := time.Since(startTime)
+    return path, articlesVisited, articlesChecked, execTime
+}
+
+func DLS(startURL, endURL string, depthLimit int) ([]string, int, int) {
+    visited := make(map[string]bool)
+    stack := []*Node{{URL: startURL, Depth: 0}}
+    file, err := os.Create("log-ids.txt")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer file.Close()
+
+    var articlesVisited, articlesChecked int
+
+    for len(stack) > 0 {
+        current := stack[len(stack)-1]
+        stack = stack[:len(stack)-1]
+
+        msg := fmt.Sprintf("Checking stack for: %s\n", current.URL)
+        fmt.Print(msg)
+        file.WriteString(msg)
+        articlesVisited++
+
+        if current.URL == endURL {
+            return getPath(current), articlesVisited, articlesChecked
+        }
+
+        if visited[current.URL] || current.Depth >= depthLimit {
+            continue
+        }
+        visited[current.URL] = true
+
+        links := getLinks(current.URL)
+        articlesChecked++
+        for _, link := range links {
+            msg := fmt.Sprintf("Scraping: %s\n", link)
+            fmt.Print(msg)
+            file.WriteString(msg)
+
+            child := &Node{URL: link, Parent: current, Depth: current.Depth + 1}
+            current.Children = append(current.Children, child)
+            stack = append(stack, child)
+        }
+    }
+
+    return nil, articlesVisited, articlesChecked
+}
+
+func extractArticleName(url string) string {
+    parts := strings.Split(url, "/")
+    return parts[len(parts)-1]
+}
+
+func getLinks(URL string) []string {
+    resp, err := http.Get(URL)
+    if err != nil {
+        log.Fatal(err)
     }
     defer resp.Body.Close()
 
     if resp.StatusCode != 200 {
-        return nil, fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
+        log.Fatalf("status code error: %d %s", resp.StatusCode, resp.Status)
     }
 
     doc, err := goquery.NewDocumentFromReader(resp.Body)
     if err != nil {
-        return nil, fmt.Errorf("error parsing page: %w", err)
+        log.Fatal(err)
     }
 
-    var links []string
-    doc.Find("#mw-content-text a").Each(func(i int, s *goquery.Selection) {
-        if href, exists := s.Attr("href"); exists {
-            if strings.HasPrefix(href, "/wiki/") && !strings.Contains(href, ":") {
-                linkTitle := strings.TrimPrefix(href, "/wiki/")
-                links = append(links, linkTitle)
-            }
+    links := []string{}
+    doc.Find("a[href]").Each(func(i int, s *goquery.Selection) {
+        link, _ := s.Attr("href")
+        if strings.HasPrefix(link, "/wiki/") {
+            links = append(links, "https://en.wikipedia.org"+link)
         }
     })
-
-    return links, nil
+    return links
 }
 
-func bfs(graph Graph, start string, end string) (int, []string, bool) {
-    visited := make(map[string]bool)
-    parent := make(map[string]string)
-    queue := list.New()
-
-    queue.PushBack(start)
-    visited[start] = true
-
-    for queue.Len() > 0 {
-        current := queue.Remove(queue.Front()).(string)
-
-        if current == end {
-            path := make([]string, 0)
-            for step := end; step != ""; step = parent[step] {
-                path = append([]string{step}, path...)
-            }
-            return len(visited), path, true
-        }
-
-        if _, found := graph[current]; !found {
-            newLinks, err := getLinks(current)
-            if err != nil {
-                fmt.Println("Error retrieving links for", current, ":", err)
-                continue
-            }
-            graph[current] = newLinks
-        }
-
-        for _, neighbor := range graph[current] {
-            if !visited[neighbor] {
-                visited[neighbor] = true
-                parent[neighbor] = current
-                queue.PushBack(neighbor)
-            }
-        }
+func getPath(endNode *Node) []string {
+    path := []string{}
+    current := endNode
+    for current != nil {
+        path = append(path, current.URL)
+        current = current.Parent
     }
-
-    return len(visited), nil, false
+    // reverse the path
+    for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+        path[i], path[j] = path[j], path[i]
+    }
+    return path
 }
 
-// import React, { useState } from 'react';
+func ShortestPathHandler(w http.ResponseWriter, r *http.Request) {
+    algorithm := r.URL.Query().Get("algorithm")
+    switch algorithm {
+    case "bfs":
+        BFSHandler(w, r)
+    case "ids":
+        IDSHandler(w, r)
+    default:
+        http.Error(w, "Invalid algorithm", http.StatusBadRequest)
+    }
+}
 
-// function App() {
-//   const [startArticle, setStartArticle] = useState('');
-//   const [targetArticle, setTargetArticle] = useState('');
-//   const [result, setResult] = useState(null);
+func main() {
+    corsHandler := cors.New(cors.Options{
+        AllowedOrigins:   []string{"http://localhost:3000"},
+        AllowCredentials: true,
+    })
 
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     try {
-//       const response = await fetch(`http://localhost:8080/shortestpath?start=${startArticle}&target=${targetArticle}`);
-//       const data = await response.json();
-//       setResult(data);
-//     } catch (error) {
-//       console.error('Error:', error);
-//     }
-//   };
+    handler := corsHandler.Handler(http.DefaultServeMux)
 
-//   return (
-//     <div>
-//       <h1>Shortest Path Finder</h1>
-//       <form onSubmit={handleSubmit}>
-//         <label>
-//           Start Article:
-//           <input type="text" value={startArticle} onChange={(e) => setStartArticle(e.target.value)} />
-//         </label>
-//         <label>
-//           Target Article:
-//           <input type="text" value={targetArticle} onChange={(e) => setTargetArticle(e.target.value)} />
-//         </label>
-//         <button type="submit">Find Shortest Path</button>
-//       </form>
-//       {result && (
-//         <div>
-//           <h2>Result</h2>
-//           <p>Checked articles: {result.checked}</p>
-//           <p>Search time: {result.search_time_ms} ms</p>
-//           <p>Path to target article: {result.path.join(' -> ')}</p>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-// export default App;
+    http.HandleFunc("/shortestpath", ShortestPathHandler)
+    fmt.Println("Server listening on port 8080...")
+    log.Fatal(http.ListenAndServe(":8080", handler))
+}

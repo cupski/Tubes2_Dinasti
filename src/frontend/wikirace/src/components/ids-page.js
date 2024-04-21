@@ -10,7 +10,7 @@ const IDSPage = () => {
     const [result, setResult] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = async (e) => {
+    const handleIDSClick = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         try {
@@ -19,7 +19,8 @@ const IDSPage = () => {
             const fullTargetArticleURL = `https://en.wikipedia.org/wiki/${targetArticle}`;
     
             // Make API request with full URLs
-            const response = await fetch(`http://localhost:8080/shortestpath?start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
+            //const response = await fetch(`http://localhost:8080/shortestpath?start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
+            const response = await fetch(`http://localhost:8080/shortestpath?algorithm=ids&start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
             const data = await response.json();
             setResult(data);
             setIsLoading(false);
@@ -48,7 +49,7 @@ const IDSPage = () => {
                 <input type="text" value={targetArticle} onChange={(e) => setTargetArticle(e.target.value)} placeholder="End Point" />
             </div>
             <div className="search-container">
-                <button onClick={handleSubmit}>Search</button>
+                <button onClick={handleIDSClick}>Search</button>
             </div>
             <div className="result-container">
                 {isLoading ? (

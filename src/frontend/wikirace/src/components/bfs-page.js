@@ -24,7 +24,7 @@ const BFSPage = () => {
     //     }
     // };
 
-    const handleSubmit = async (e) => {
+    const handleBFSClick = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         try {
@@ -33,7 +33,8 @@ const BFSPage = () => {
             const fullTargetArticleURL = `https://en.wikipedia.org/wiki/${targetArticle}`;
     
             // Make API request with full URLs
-            const response = await fetch(`http://localhost:8080/shortestpath?start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
+            // const response = await fetch(`http://localhost:8080/shortestpath?start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
+            const response = await fetch(`http://localhost:8080/shortestpath?algorithm=bfs&start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
             const data = await response.json();
             setResult(data);
             setIsLoading(false);
@@ -62,7 +63,7 @@ const BFSPage = () => {
                 <input type="text" value={targetArticle} onChange={(e) => setTargetArticle(e.target.value)} placeholder="End Point" />
             </div>
             <div className="search-container">
-                <button onClick={handleSubmit}>Search</button>
+                <button onClick={handleBFSClick}>Search</button>
             </div>
             <div className="result-container">
                 {isLoading ? (
