@@ -55,12 +55,15 @@ const IDSPage = () => {
             const response = await fetch(`http://localhost:8080/shortestpath?algorithm=ids&start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
             const data = await response.json();
 
-            const nodes = data.path.map((url, index) => ({
-                id: index,
-                label: url,
-                shape: 'star',
-                color: index === 0 ? 'red' : index === data.path.length - 1 ? 'rgba(133, 225, 4, 0.946)' : undefined // Set color for start and end points
-            }));
+            const nodes = data.path.map((url, index) => {
+                const pageName = url.split('/').pop(); // ambil nama aja
+                return {
+                    id: index,
+                    label: pageName,
+                    shape: 'star',
+                    color: index === 0 ? 'red' : index === data.path.length - 1 ? 'rgba(133, 225, 4, 0.946)' : undefined // Set color for start and end points
+                };
+            });
             const edges = [];
             for (let i = 0; i < nodes.length - 1; i++) {
                 edges.push({ id: `edge${i}`, from: i, to: i + 1, arrows: "to" });
