@@ -55,7 +55,7 @@ const BFSPage = () => {
                 id: index,
                 label: url,
                 shape: 'star',
-                color: index === 0 ? 'red' : index === data.path.length - 1 ? 'green' : undefined // Set color for start and end points
+                color: index === 0 ? 'red' : index === data.path.length - 1 ? 'rgba(133, 225, 4, 0.946)' : undefined // Set color for start and end points
             }));
             const edges = [];
             for (let i = 0; i < nodes.length - 1; i++) {
@@ -73,7 +73,7 @@ const BFSPage = () => {
     };
 
     const handleEdgeClick = (event) => {
-        setClickedEdge(event.edges[0]); // Store the clicked edge id
+        setClickedEdge(event.edges[0]);
     };
 
     const navigate = useNavigate();
