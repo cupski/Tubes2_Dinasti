@@ -136,13 +136,13 @@ const IDSPage = () => {
                 ) : result ? (
                     <div>
                         <h2>Result</h2>
-                        <ul>
+                        <ol>
                             {result.path.map((url, index) => (
                                 <li key={index}>
                                     <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>
                                 </li>
                             ))}
-                        </ul>
+                        </ol>
                         <p>Articles Visited: {result.articlesVisited}</p>
                         <p>Articles Checked: {result.articlesChecked}</p>
                         <p>Execution Time: {result.executionTime} ms</p>
