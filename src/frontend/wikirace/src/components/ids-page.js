@@ -90,6 +90,15 @@ const IDSPage = () => {
         navigate('/');
     };
 
+    const handleNodeClick = (event) => {
+        const nodeId = event.nodes[0]; // Ambil id node yang diklik
+        const clickedNode = graphData.nodes.find(node => node.id === nodeId); // Cari node yang sesuai dengan id
+        if (clickedNode) {
+            const wikiLink = `https://en.wikipedia.org/wiki/${clickedNode.label}`;
+            window.open(wikiLink, '_blank'); // Buka link Wikipedia pada tab baru
+        }
+    };
+
     return (
         <div className="logic-container">
             <img src={ids_title} alt="BFS TITLE" className='header-dfs'/>
@@ -168,7 +177,8 @@ const IDSPage = () => {
                                     }
                                 }}
                                 events={{
-                                    selectEdge: handleEdgeClick // Handle edge click event
+                                    selectEdge: handleEdgeClick,
+                                    selectNode: handleNodeClick
                                 }}
                             />
                         </div>
