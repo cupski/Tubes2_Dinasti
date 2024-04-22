@@ -17,7 +17,7 @@ const BFSPage = () => {
         try {
             const response = await fetch(
                 `https://en.wikipedia.org/w/api.php?action=opensearch&limit=10&format=json&search=${input}&origin=*`
-              );
+            );
             const data = await response.json();
             const suggestions = data[1] || [];
             setSuggestions(suggestions);
@@ -43,10 +43,8 @@ const BFSPage = () => {
         setIsLoading(true);
         try {
             // Construct full URLs
-
             const formattedStartArticle = startArticle.replace(/ /g, '_');
             const formattedTargetArticle = targetArticle.replace(/ /g, '_');
-
             const fullStartArticleURL = `https://en.wikipedia.org/wiki/${formattedStartArticle}`;
             const fullTargetArticleURL = `https://en.wikipedia.org/wiki/${formattedTargetArticle}`;
     
@@ -88,16 +86,14 @@ const BFSPage = () => {
                         type="text"
                         value={startArticle}
                         onChange={(e) => setStartArticle(e.target.value)}
+                        list="startSuggestions"
                         placeholder="Enter Start Point"
                     />
-                    <select value={startArticle} onChange={(e) => setStartArticle(e.target.value)}>
-                        <option value="">Select Start Point</option>
-                        {startSuggestions
-                            .filter(suggestion => suggestion.toLowerCase().includes(startArticle.toLowerCase()))
-                            .map((suggestion, index) => (
-                                <option key={index} value={suggestion}>{suggestion}</option>
-                            ))}
-                    </select>
+                    <datalist id="startSuggestions">
+                        {startSuggestions.map((suggestion, index) => (
+                            <option key={index} value={suggestion} />
+                        ))}
+                    </datalist>
                 </div>
             </div>
             <div className="end-container">
@@ -107,16 +103,14 @@ const BFSPage = () => {
                         type="text"
                         value={targetArticle}
                         onChange={(e) => setTargetArticle(e.target.value)}
+                        list="targetSuggestions"
                         placeholder="Enter End Point"
                     />
-                    <select value={targetArticle} onChange={(e) => setTargetArticle(e.target.value)}>
-                        <option value="">Select End Point</option>
-                        {targetSuggestions
-                            .filter(suggestion => suggestion.toLowerCase().includes(targetArticle.toLowerCase()))
-                            .map((suggestion, index) => (
-                                <option key={index} value={suggestion}>{suggestion}</option>
-                            ))}
-                    </select>
+                    <datalist id="targetSuggestions">
+                        {targetSuggestions.map((suggestion, index) => (
+                            <option key={index} value={suggestion} />
+                        ))}
+                    </datalist>
                 </div>
             </div>
             <div className="search-container">
