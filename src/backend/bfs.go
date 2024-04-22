@@ -124,8 +124,11 @@ func main() {
 	// startURL := "https://en.wikipedia.org/wiki/Artificial_intelligence"
 	// endURL := "https://en.wikipedia.org/wiki/Power_(physics)"
 
-	startURL := "https://en.wikipedia.org/wiki/50_Ways_to_Leave_Your_Lover"
-	endURL := "https://en.wikipedia.org/wiki/Ted_Bundy"
+	// startURL := "https://en.wikipedia.org/wiki/50_Ways_to_Leave_Your_Lover"
+	// endURL := "https://en.wikipedia.org/wiki/Ted_Bundy"
+
+	startURL := "https://en.wikipedia.org/wiki/Lo_mai_gai" 
+	endURL := "https://en.wikipedia.org/wiki/Shumai"
 
 	fmt.Println("Mencari rute dari", startURL, "ke", endURL)
 

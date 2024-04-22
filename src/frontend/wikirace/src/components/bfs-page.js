@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './styles.css';
 import bfs_title from './assets/bfs-text.png';
 import { useNavigate } from 'react-router-dom';
-import { Graph } from 'react-d3-graph';
+import Graph from 'react-vis-network-graph';
 
 const BFSPage = () => {
     const [startArticle, setStartArticle] = useState('');
@@ -12,6 +12,7 @@ const BFSPage = () => {
     const [graphData, setGraphData] = useState(null);
     const [startSuggestions, setStartSuggestions] = useState([]);
     const [targetSuggestions, setTargetSuggestions] = useState([]);
+    const [clickedEdge, setClickedEdge] = useState(null);
 
     const fetchSuggestions = async (input, setSuggestions) => {
         try {
@@ -42,32 +43,37 @@ const BFSPage = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            // Construct full URLs
             const formattedStartArticle = startArticle.replace(/ /g, '_');
             const formattedTargetArticle = targetArticle.replace(/ /g, '_');
             const fullStartArticleURL = `https://en.wikipedia.org/wiki/${formattedStartArticle}`;
             const fullTargetArticleURL = `https://en.wikipedia.org/wiki/${formattedTargetArticle}`;
     
-            // Make API request with full URLs
             const response = await fetch(`http://localhost:8080/shortestpath?algorithm=bfs&start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
             const data = await response.json();
 
-            // Transform data into graph format
-            const graphNodes = data.path.map((url) => ({ id: url, label: url }));
-            const graphLinks = data.path.slice(0, -1).map((url, index) => ({ source: url, target: data.path[index + 1] }));
-
-            const graphData = {
-                nodes: graphNodes,
-                links: graphLinks
-            };
+            const nodes = data.path.map((url, index) => ({
+                id: index,
+                label: url,
+                shape: 'star',
+                color: index === 0 ? 'red' : index === data.path.length - 1 ? 'green' : undefined // Set color for start and end points
+            }));
+            const edges = [];
+            for (let i = 0; i < nodes.length - 1; i++) {
+                edges.push({ id: `edge${i}`, from: i, to: i + 1, arrows: "to" });
+            }
+            const graph = { nodes, edges };
+            setGraphData(graph);
 
             setResult(data);
-            setGraphData(graphData);
             setIsLoading(false);
         } catch (error) {
             console.error('Error fetching data:', error);
             setIsLoading(false);
         }
+    };
+
+    const handleEdgeClick = (event) => {
+        setClickedEdge(event.edges[0]); // Store the clicked edge id
     };
 
     const navigate = useNavigate();
@@ -132,21 +138,32 @@ const BFSPage = () => {
                         <p>Articles Visited: {result.articlesVisited}</p>
                         <p>Articles Checked: {result.articlesChecked}</p>
                         <p>Execution Time: {result.executionTime} ms</p>
-                        {graphData && (
-                            <div className="graph-container">
-                                <Graph
-                                    id="graph-id" // id is mandatory
-                                    data={graphData}
-                                    config={{
-                                        node: {
-                                            size: 1000,
-                                            highlightStrokeColor: 'blue'
+                        <div style={{ height: '400px' }}>
+                            <Graph
+                                graph={graphData}
+                                options={{
+                                    nodes: {
+                                        shape: 'star',
+                                        size: 20, // Set the size of the nodes
+                                        font: {
+                                            color: 'white' // Set the font color of the labels
+                                        }
+                                    },
+                                    edges: {
+                                        font: {
+                                            align: 'horizontal'
                                         },
-                                        link: { highlightColor: 'lightblue' }
-                                    }}
-                                />
-                            </div>
-                        )}
+                                        color: {
+                                            color: clickedEdge ? 'white' : 'white', // Set the color of the edges
+                                            highlight: clickedEdge ? 'yellow' : 'white' // Set the color of the edges when clicked
+                                        }
+                                    }
+                                }}
+                                events={{
+                                    selectEdge: handleEdgeClick // Handle edge click event
+                                }}
+                            />
+                        </div>
                     </div>
                 ) : null}
             </div>
