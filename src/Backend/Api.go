@@ -105,7 +105,7 @@ func IDSHandler(w http.ResponseWriter, r *http.Request) {
 
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     visited := make(map[string]bool)
-    stack := []*Node{{URL: startURL}}
+    queue := []*Node{{URL: startURL}}
 
     file, err := os.Create("log-bfs.txt")
 	if err != nil {
@@ -116,9 +116,9 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     start := time.Now()
     var articlesVisited, articlesChecked int
 
-    for len(stack) > 0 {
-        current := stack[0]
-        stack = stack[1:]
+    for len(queue) > 0 {
+        current := queue[0]
+        queue = queue[1:]
         if(current.URL == startURL){
             articlesVisited++
         }
@@ -153,7 +153,7 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 
             child := &Node{URL: link, Parent: current}
             current.Children = append(current.Children, child)
-            stack = append(stack, child)
+            queue = append(queue, child)
         }
 
         if endFound {
@@ -190,6 +190,7 @@ func IDS(startURL, endURL string) ([]string, int, int, time.Duration) {
 func DLS(startURL, endURL string, depthLimit int) ([]string, int, int, bool) {
     visited := make(map[string]bool)
     stack := []*Node{{URL: startURL, Depth: 0}}
+
     file, err := os.Create("log-ids.txt")
     if err != nil {
         log.Fatal(err)
