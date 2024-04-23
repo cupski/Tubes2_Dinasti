@@ -104,6 +104,9 @@ func IDSHandler(w http.ResponseWriter, r *http.Request, f *os.File) {
 }
 
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
+    var path []string
+    var endFound bool
+
     visited := make(map[string]bool)
     queue := []*Node{{URL: startURL}}
 
@@ -114,59 +117,65 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 	defer file.Close()
 
     start := time.Now()
-    var articlesVisited, articlesChecked int
+    var articlesChecked int
 
     for len(queue) > 0 {
         current := queue[0]
         queue = queue[1:]
-        if(current.URL == startURL){
-            articlesVisited++
-        }
+        
 
         if current.URL == endURL {
             end := time.Since(start)
-            return getPath(current), articlesVisited, articlesChecked, end
+            path = getPath(current)
+            return path, len(path)-1 , articlesChecked, end
         }
 
-        if visited[current.URL] {
-            continue
-        }
-        visited[current.URL] = true
-
-        links := getLinks(current.URL)
-        if(current.URL == startURL){
-            articlesChecked++
-        }
-        endFound := false
-        for _, link := range links {
-            articlesVisited++
-
-            msg := fmt.Sprintf("Scraping: %s\n", link)
-			fmt.Print(msg)
-			file.WriteString(msg)
-
-            articlesChecked++
-            if link == endURL {
-                endFound = true
-                break
+        if !visited[current.URL] {
+            if(current.URL != startURL){
+                articlesChecked++
             }
+            visited[current.URL] = true
 
-            child := &Node{URL: link, Parent: current}
-            current.Children = append(current.Children, child)
-            queue = append(queue, child)
+            links := getLinks(current.URL)
+
+            for _, link := range links {
+
+                msg := fmt.Sprintf("Scraping: %s\n", link)
+                fmt.Print(msg)
+                file.WriteString(msg)
+
+                if !visited[link] {
+                    if(link != startURL){
+                        articlesChecked++
+                    }
+                    visited[current.URL] = true
+                }
+
+                if link == endURL {
+                    endFound = true
+                    break
+                }
+
+                child := &Node{URL: link, Parent: current}
+                current.Children = append(current.Children, child)
+                queue = append(queue, child)
+            }
         }
+        
 
         if endFound {
             end := time.Since(start)
-            return getPath(&Node{URL: endURL, Parent: current}), articlesVisited, articlesChecked, end
+            path = getPath(&Node{URL: endURL, Parent: current})
+            return path, len(path)-1 , articlesChecked, end
         }
     }
-    return nil, articlesVisited, articlesChecked, 0
+    return nil, 0, articlesChecked, 0
 }
 
 
 func IDS(startURL, endURL string, f *os.File) ([]string, int, int, time.Duration) {
     startTime := time.Now()
+    visited := make(map[string]bool)
     stack := []*Node{{URL: startURL, Depth: 0}}
 
     var path []string
@@ -174,16 +183,13 @@ func IDS(startURL, endURL string, f *os.File) ([]string, int, int, time.Duration
     var found bool
 
     for {
-        path, articlesVisited, articlesChecked, found = DLS(stack, endURL, depthLimit, f)
+        path, articlesVisited, articlesChecked, found = DLS(stack, endURL, depthLimit, f, visited)
         if found {
             break
         }
         depthLimit++
     }
 
-    // if path == nil {
-    //     return nil, articlesVisited, articlesChecked, 0
-    // }
 
     execTime := time.Since(startTime)
     return path, articlesVisited, articlesChecked, execTime
@@ -191,7 +197,7 @@ func IDS(startURL, endURL string, f *os.File) ([]string, int, int, time.Duration
 
 var articlesVisited, articlesChecked int
 
-func DLS(stack []*Node , endURL string, depthLimit int, f *os.File) ([]string, int, int, bool) {
+func DLS(stack []*Node , endURL string, depthLimit int, f *os.File, visited map[string]bool) ([]string, int, int, bool) {
 
     var found bool
     var path []string
@@ -202,15 +208,21 @@ func DLS(stack []*Node , endURL string, depthLimit int, f *os.File) ([]string, i
     fmt.Print(msg)
     f.WriteString(msg)
     
-    articlesVisited++
-    articlesChecked++
+
+
+    if(current.URL != stack[0].URL){
+        articlesChecked++
+    }
+    visited[current.URL] = true
 
     if current.URL == endURL {
-        return getPath(current), articlesVisited, articlesChecked, true
+        path = getPath(current)
+        return path, len(path)-1, articlesChecked, true
     }
 
     if depthLimit <= 0 {
-        return getPath(current), articlesVisited, articlesChecked, false
+        path = getPath(current)
+        return path, len(path)-1, articlesChecked, false
     }
 
     links := getLinks(current.URL)
@@ -220,7 +232,13 @@ func DLS(stack []*Node , endURL string, depthLimit int, f *os.File) ([]string, i
         current.Children = append(current.Children, child)
         stack = append(stack, child)
 
-        path, articlesVisited, articlesChecked, found = DLS(stack, endURL, depthLimit-1, f)
+        if !visited[current.URL] {
+            if(current.URL != stack[0].URL){
+                articlesChecked++
+            }
+            visited[current.URL] = true
+        }
+        path, articlesVisited, articlesChecked, found = DLS(stack, endURL, depthLimit-1, f, visited)
         if found {
             return  path, articlesVisited, articlesChecked, true
         }
