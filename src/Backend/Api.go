@@ -67,7 +67,7 @@ func BFSHandler(w http.ResponseWriter, r *http.Request) {
     w.Write(jsonResponse)
 }
 
-func IDSHandler(w http.ResponseWriter, r *http.Request) {
+func IDSHandler(w http.ResponseWriter, r *http.Request, f *os.File) {
     startArticle := r.URL.Query().Get("start")
     targetArticle := r.URL.Query().Get("target")
 
@@ -77,7 +77,7 @@ func IDSHandler(w http.ResponseWriter, r *http.Request) {
     fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
     fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
 
-    path, articlesVisited, articlesChecked, execTime := IDS(fullStartURL, fullTargetURL)
+    path, articlesVisited, articlesChecked, execTime := IDS(fullStartURL, fullTargetURL, f)
 
     if path == nil {
         http.Error(w, "Route not found", http.StatusNotFound)
@@ -165,14 +165,16 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 }
 
 
-func IDS(startURL, endURL string) ([]string, int, int, time.Duration) {
+func IDS(startURL, endURL string, f *os.File) ([]string, int, int, time.Duration) {
     startTime := time.Now()
+    stack := []*Node{{URL: startURL, Depth: 0}}
+
     var path []string
     var articlesVisited, articlesChecked, depthLimit int
     var found bool
 
     for {
-        path, articlesVisited, articlesChecked, found = DLS(startURL, endURL, depthLimit)
+        path, articlesVisited, articlesChecked, found = DLS(stack, endURL, depthLimit, f)
         if found {
             break
         }
@@ -187,51 +189,43 @@ func IDS(startURL, endURL string) ([]string, int, int, time.Duration) {
     return path, articlesVisited, articlesChecked, execTime
 }
 
-func DLS(startURL, endURL string, depthLimit int) ([]string, int, int, bool) {
-    visited := make(map[string]bool)
-    stack := []*Node{{URL: startURL, Depth: 0}}
+var articlesVisited, articlesChecked int
 
-    file, err := os.Create("log-ids.txt")
-    if err != nil {
-        log.Fatal(err)
+func DLS(stack []*Node , endURL string, depthLimit int, f *os.File) ([]string, int, int, bool) {
+
+    var found bool
+    var path []string
+
+    current := stack[len(stack)-1]
+
+    msg := fmt.Sprintf("Scraping: %s\n", current.URL)
+    fmt.Print(msg)
+    f.WriteString(msg)
+    
+    articlesVisited++
+    articlesChecked++
+
+    if current.URL == endURL {
+        return getPath(current), articlesVisited, articlesChecked, true
     }
-    defer file.Close()
 
-    var articlesVisited, articlesChecked int
+    if depthLimit <= 0 {
+        return getPath(current), articlesVisited, articlesChecked, false
+    }
 
-    for len(stack) > 0 {
-        current := stack[0]
-        stack = stack[1:]
+    links := getLinks(current.URL)
 
-        msg := fmt.Sprintf("Checking stack for: %s\n", current.URL)
-        file.WriteString(msg)
-        articlesVisited++
+    for _, link := range links {
+        child := &Node{URL: link, Parent: current}
+        current.Children = append(current.Children, child)
+        stack = append(stack, child)
 
-        if current.URL == endURL {
-            return getPath(current), articlesVisited, articlesChecked, true
-        }
-
-        if current.Depth == depthLimit {
-            return getPath(current), articlesVisited, articlesChecked, false
-        }
-
-        if visited[current.URL]{
-            continue
-        }
-        visited[current.URL] = true
-
-        links := getLinks(current.URL)
-        articlesChecked++
-        for _, link := range links {
-            msg := fmt.Sprintf("Scraping: %s\n", link)
-            // fmt.Print(msg)
-            file.WriteString(msg)
-
-            child := &Node{URL: link, Parent: current, Depth: current.Depth + 1}
-            current.Children = append(current.Children, child)
-            stack = append(stack, child)
+        path, articlesVisited, articlesChecked, found = DLS(stack, endURL, depthLimit-1, f)
+        if found {
+            return  path, articlesVisited, articlesChecked, true
         }
     }
+
 
     return nil, articlesVisited, articlesChecked, false
 }
@@ -287,7 +281,12 @@ func ShortestPathHandler(w http.ResponseWriter, r *http.Request) {
     case "bfs":
         BFSHandler(w, r)
     case "ids":
-        IDSHandler(w, r)
+        file, err := os.Create("log-ids.txt")
+        if err != nil {
+            log.Fatal(err)
+        }
+        defer file.Close()
+        IDSHandler(w, r, file)
     default:
         http.Error(w, "Invalid algorithm", http.StatusBadRequest)
     }
