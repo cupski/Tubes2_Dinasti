@@ -3,17 +3,44 @@ import './styles.css';
 import ids_title from './assets/ids-text.png'
 import { useNavigate } from 'react-router-dom';
 import Graph from 'react-vis-network-graph';
-
+import luffyRunning from './assets/luffy-running.gif'
 
 const IDSPage = () => {
     const [startArticle, setStartArticle] = useState('');
     const [targetArticle, setTargetArticle] = useState('');
     const [result, setResult] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState('');
+    const [showMessage, setShowMessage] = useState(true);
     const [graphData, setGraphData] = useState(null);
     const [startSuggestions, setStartSuggestions] = useState([]);
     const [targetSuggestions, setTargetSuggestions] = useState([]);
     const [clickedEdge, setClickedEdge] = useState(null);
+
+    useEffect(() => {
+        let interval;
+        if (isLoading) {
+            let messages = [
+                'Tunggu ya... rutemu lagi dicari Luffy nih!',
+                'Duh.. kayaknya agak jauh...',
+                'Hmm.. kamu masih sabar kannn?'
+            ];
+            let index = 0;
+            setLoadingMessage(messages[index]);
+
+            interval = setInterval(() => {
+                setShowMessage(false); // mulai pudar
+                setTimeout(() => {
+                    index = (index + 1) % messages.length; // Ganti index pesan
+                    setLoadingMessage(messages[index]); // Setel pesan baru
+                    setShowMessage(true); // Munculkan kembali pesan
+                }, 500); // Waktu memudar
+            }, 12000);
+        }
+        return () => {
+            clearInterval(interval);
+        };
+    }, [isLoading]);
 
     const fetchSuggestions = async (input, setSuggestions) => {
         try {
@@ -141,7 +168,10 @@ const IDSPage = () => {
             </div>
             <div className="result-container">
                 {isLoading ? (
-                    <p>Loading...</p>
+                    <div>
+                        <img src={luffyRunning} alt="Luffy running" className="loading-gif"/>
+                        <p className={`loading-message ${showMessage ? 'fade-in' : 'fade-out'}`}>{loadingMessage}</p>
+                    </div>
                 ) : result ? (
                     <div>
                         <h2>Result</h2>
