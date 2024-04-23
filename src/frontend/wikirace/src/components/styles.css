@@ -567,3 +567,32 @@ background-color: #e9ecef;
     z-index: 1;
 }
   
+.loading-gif {
+    display: block;
+    margin: 10px auto; 
+    width: 220px;
+}
+
+.loading-message {
+    text-align: center;
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s;
+}
+
+.fade-out {
+    animation: fadeOut 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
