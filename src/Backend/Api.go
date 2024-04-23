@@ -269,11 +269,33 @@ func getLinks(URL string) []string {
         log.Fatal(err)
     }
 
+    var prefixes = []string{
+        "/wiki/Main_Page:",
+        "/wiki/Special:",
+        "/wiki/Talk:",
+        "/wiki/User:",
+        "/wiki/Portal:",
+        "/wiki/Wikipedia:",
+        "/wiki/File:",
+        "/wiki/Category:",
+        "/wiki/Help:",
+        "/wiki/Template:",
+    }
+
     links := []string{}
     doc.Find("a[href]").Each(func(i int, s *goquery.Selection) {
         link, _ := s.Attr("href")
         if strings.HasPrefix(link, "/wiki/") {
-            links = append(links, "https://en.wikipedia.org"+link)
+            skip := false
+            for _, prefix := range prefixes {
+                if strings.HasPrefix(link, prefix) {
+                    skip = true
+                    break
+                }
+            }
+            if !skip {
+                links = append(links, "https://en.wikipedia.org"+link)
+            }
         }
     })
     return links
