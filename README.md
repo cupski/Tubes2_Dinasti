@@ -59,10 +59,10 @@ Program ini mengimplementasikan algoritma IDS dan BFS untuk menyelesaikan permai
 
 ## Program Requirements
 
-### Program requirements untuk backend (Go)
+### Program requirements untuk backend - Go
 1.  Buka link <b>https://go.dev/doc/install</b> dan unduh package dengan menekan <code>download</code>. Selanjutnya, buka package file yang telah diinstal dan ikuti langkah penginstalan.
 
-### Program requirements untuk frontend (React)
+### Program requirements untuk frontend - React.js
 1. Install requirements website dengan command:
     ```
     npm install
