@@ -6,6 +6,8 @@ import (
     "log"
     "net/http"
     "os"
+    "sync"
+    "sync/atomic"
     "strings"
     "time"
 
@@ -103,9 +105,12 @@ func IDSHandler(w http.ResponseWriter, r *http.Request, f *os.File) {
     w.Write(jsonResponse)
 }
 
+
+
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     var path []string
     var endFound bool
+    var articlesChecked int
 
     visited := make(map[string]bool)
     queue := []*Node{{URL: startURL}}
@@ -117,7 +122,7 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 	defer file.Close()
 
     start := time.Now()
-    var articlesChecked int
+    
 
     for len(queue) > 0 {
         current := queue[0]
@@ -141,7 +146,7 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
             for _, link := range links {
 
                 msg := fmt.Sprintf("Scraping: %s\n", link)
-                fmt.Print(msg)
+                // fmt.Print(msg)
                 file.WriteString(msg)
 
                 if !visited[link] {
@@ -173,80 +178,87 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 }
 
 
+var Checked int32  // Ensure it's used and explained clearly
+
 func IDS(startURL, endURL string, f *os.File) ([]string, int, int, time.Duration) {
     startTime := time.Now()
-    visited := make(map[string]bool)
+    visited := &sync.Map{}
     stack := []*Node{{URL: startURL, Depth: 0}}
+    
+    var Visited int32
+    var found atomic.Bool
 
-    var path []string
-    var articlesVisited, articlesChecked, depthLimit int
-    var found bool
+    resultChan := make(chan []string, 1)
+    doneChan := make(chan bool, 1)
+    var wg sync.WaitGroup
 
-    for {
-        path, articlesVisited, articlesChecked, found = DLS(stack, endURL, depthLimit, f, visited)
-        if found {
-            break
+    runSearch := func(stack []*Node, depthLimit int, visited *sync.Map) {
+        defer wg.Done()
+        localPath, localVisited, localChecked, foundLocal := DLS(stack, endURL, depthLimit, f, visited)
+        if foundLocal {
+            found.Store(true)
+            resultChan <- localPath
+            doneChan <- true
         }
-        depthLimit++
+        atomic.AddInt32(&Visited, int32(localVisited))
+        atomic.AddInt32(&Checked, int32(localChecked))
     }
 
+    for depthLimit := 0; !found.Load(); depthLimit++ {
+        wg.Add(1)
+        go runSearch(stack, depthLimit, visited)
 
+        select {
+        case <-doneChan:
+            wg.Wait()
+            break
+        default:
+            wg.Wait()
+        }
+    }
+
+    close(resultChan)
+    var result []string
+    if len(resultChan) > 0 {
+        result = <-resultChan
+    }
     execTime := time.Since(startTime)
-    return path, articlesVisited, articlesChecked, execTime
+    return result, int(atomic.LoadInt32(&Visited)), int(atomic.LoadInt32(&Checked)), execTime
 }
 
-var articlesVisited, articlesChecked int
-
-func DLS(stack []*Node , endURL string, depthLimit int, f *os.File, visited map[string]bool) ([]string, int, int, bool) {
-
-    var found bool
-    var path []string
-
+func DLS(stack []*Node, endURL string, depthLimit int, f *os.File, visited *sync.Map) ([]string, int, int, bool) {
     current := stack[len(stack)-1]
 
-    msg := fmt.Sprintf("Scraping: %s\n", current.URL)
-    fmt.Print(msg)
-    f.WriteString(msg)
-    
+    f.WriteString(fmt.Sprintf("Scraping: %s\n", current.URL))
 
-
-    if(current.URL != stack[0].URL){
-        articlesChecked++
+    if _, loaded := visited.LoadOrStore(current.URL, true); !loaded && current.URL != stack[0].URL {
+        atomic.AddInt32(&Checked, 1)
     }
-    visited[current.URL] = true
 
     if current.URL == endURL {
-        path = getPath(current)
-        return path, len(path)-1, articlesChecked, true
+        path := getPath(current)
+        return path, len(path)-1, int(atomic.LoadInt32(&Checked)), true
     }
 
     if depthLimit <= 0 {
-        path = getPath(current)
-        return path, len(path)-1, articlesChecked, false
+        path := getPath(current)
+        return path, len(path)-1, int(atomic.LoadInt32(&Checked)), false
     }
 
     links := getLinks(current.URL)
-
     for _, link := range links {
         child := &Node{URL: link, Parent: current}
         current.Children = append(current.Children, child)
         stack = append(stack, child)
-
-        if !visited[current.URL] {
-            if(current.URL != stack[0].URL){
-                articlesChecked++
-            }
-            visited[current.URL] = true
-        }
-        path, articlesVisited, articlesChecked, found = DLS(stack, endURL, depthLimit-1, f, visited)
+        path, vis, check, found := DLS(stack, endURL, depthLimit-1, f, visited)
         if found {
-            return  path, articlesVisited, articlesChecked, true
+            return path, vis, check, true
         }
     }
-
-
-    return nil, articlesVisited, articlesChecked, false
+    return nil, 0, int(atomic.LoadInt32(&Checked)), false
 }
+
+
 
 func extractArticleName(url string) string {
     parts := strings.Split(url, "/")
@@ -270,6 +282,7 @@ func getLinks(URL string) []string {
     }
 
     var prefixes = []string{
+        "/wiki/Main_Page",
         "/wiki/Main_Page:",
         "/wiki/Special:",
         "/wiki/Talk:",
@@ -300,6 +313,7 @@ func getLinks(URL string) []string {
     })
     return links
 }
+
 
 func getPath(endNode *Node) []string {
     path := []string{}
