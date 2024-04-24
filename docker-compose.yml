@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - wikirace-network
+
+  frontend:
+    build:
+      context: ./src/frontend/wikirace
+      dockerfile: dockerfile
+    ports:
+      - "3000:80"
+    networks:
+      - wikirace-network
+
+networks:
+  wikirace-network:
+    driver: bridge
