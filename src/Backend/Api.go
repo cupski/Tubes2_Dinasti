@@ -104,6 +104,12 @@ func IDSHandler(w http.ResponseWriter, r *http.Request, f *os.File) {
     w.Write(jsonResponse)
 }
 
+func min(a, b int) int {
+    if a < b {
+        return a
+    }
+    return b
+}
 	
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     var path []string
@@ -112,79 +118,73 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     endFoundCh := make(chan bool, 1)
     visited := make(map[string]bool)
     queue := []*Node{{URL: startURL}}
+    batchSize := 15
 
     file, err := os.Create("log-bfs.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer file.Close()
 
     start := time.Now()
-    
+
     var mutex sync.Mutex
 
     for len(queue) > 0 {
-        current := queue[0]
-        queue = queue[1:]
+        batch := queue[:min(len(queue), batchSize)] // pilih batch size dari queue
+        queue = queue[min(len(queue), batchSize):]
+
         
-
-        if current.URL == endURL {
-            end := time.Since(start)
-            path = getPath(current)
-            return path, len(path)-1 , articlesChecked, end
-        }
-
-        visited[current.URL] = true
-
-        if !visited[current.URL] {
-            if(current.URL != startURL){
-                articlesChecked++
-            }
-        }
-        
-        links := getLinks(current.URL)
-
         var wg sync.WaitGroup
-        
-        for _, link := range links {
+        for _, current := range batch {
+            msg := fmt.Sprintf("Checking queue for: %s\n", current.URL)
+            file.WriteString(msg)
             wg.Add(1)
-            go func() {
+            go func(current *Node) {
                 defer wg.Done()
+                links := getLinks(current.URL)
+
                 mutex.Lock()
                 defer mutex.Unlock()
 
-                if !visited[link] {
-                    if link != startURL {
-                        articlesChecked++
+                for _, link := range links {
+                    if !visited[link] {
+                        if link != startURL {
+                            articlesChecked++
+                        }
+                        visited[link] = true
                     }
-                    visited[link] = true
+
+                    file.WriteString(fmt.Sprintf("Scraping: %s\n", link))
+
+                    if link == endURL {
+                        endFoundCh <- true // Send signal that end found
+                        return
+                    }
                 }
+            }(current)
+        }
 
-                file.WriteString(fmt.Sprintf("Scraping: %s\n", link))
+        wg.Wait()
 
-                if link == endURL {
-                    endFoundCh <- true // Kirim sinyal bahwa endFound bernilai true
-                    return
+        select {
+        case <-endFoundCh:
+            end := time.Since(start)
+            path = getPath(&Node{URL: endURL, Parent: queue[0]})
+            return path, len(path) - 1, articlesChecked, end
+        default:
+            for _, current := range batch {
+                links := getLinks(current.URL)
+                for _, link := range links {
+                    child := &Node{URL: link, Parent: current}
+                    current.Children = append(current.Children, child)
+                    queue = append(queue, child)
                 }
-            }()
-
-            wg.Wait()
-
-            select {
-            case <-endFoundCh:
-                end := time.Since(start)
-                path = getPath(&Node{URL: endURL, Parent: current})
-                return path, len(path)-1 , articlesChecked, end
-            default:
-                child := &Node{URL: link, Parent: current}
-                current.Children = append(current.Children, child)
-                queue = append(queue, child)
-                continue
             }
         }
-        
     }
-    close(endFoundCh)    
+
+    close(endFoundCh)
     return nil, 0, articlesChecked, 0
 }
 
@@ -267,7 +267,13 @@ func extractArticleName(url string) string {
     return parts[len(parts)-1]
 }
 
+var linkCache sync.Map
+
 func getLinks(URL string) []string {
+    if value, ok := linkCache.Load(URL); ok {
+        return value.([]string)
+    }
+
     resp, err := http.Get(URL)
     if err != nil {
         log.Fatal(err)
@@ -321,6 +327,7 @@ func getLinks(URL string) []string {
             }
         }
     })
+    linkCache.Store(URL, links)
     return links
 }
 
