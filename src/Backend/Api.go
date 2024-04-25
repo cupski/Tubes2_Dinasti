@@ -33,8 +33,8 @@ func BFSHandler(w http.ResponseWriter, r *http.Request) {
     startArticle := r.URL.Query().Get("start")
     targetArticle := r.URL.Query().Get("target")
     
-    fmt.Println(startArticle)
-    fmt.Println(targetArticle)
+    // fmt.Println(startArticle)
+    // fmt.Println(targetArticle)
     
     startArticleName := extractArticleName(startArticle)
     targetArticleName := extractArticleName(targetArticle)
@@ -104,8 +104,7 @@ func IDSHandler(w http.ResponseWriter, r *http.Request, f *os.File) {
     w.Write(jsonResponse)
 }
 
-
-
+	
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     var path []string
     var articlesChecked int
@@ -149,7 +148,7 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
         
         for _, link := range links {
             wg.Add(1)
-            go func(link string) {
+            go func() {
                 defer wg.Done()
                 mutex.Lock()
                 defer mutex.Unlock()
@@ -165,8 +164,9 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 
                 if link == endURL {
                     endFoundCh <- true // Kirim sinyal bahwa endFound bernilai true
+                    return
                 }
-            }(link)
+            }()
 
             wg.Wait()
 
@@ -182,8 +182,9 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
                 continue
             }
         }
-        close(endFoundCh)
-    }    
+        
+    }
+    close(endFoundCh)    
     return nil, 0, articlesChecked, 0
 }
 
@@ -328,12 +329,8 @@ func getPath(endNode *Node) []string {
     path := []string{}
     current := endNode
     for current != nil {
-        path = append(path, current.URL)
+        path = append([]string{current.URL}, path...) // Tambahkan URL di depan slice
         current = current.Parent
-    }
-    // reverse the path
-    for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
-        path[i], path[j] = path[j], path[i]
     }
     return path
 }
