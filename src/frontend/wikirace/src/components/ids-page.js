@@ -16,6 +16,7 @@ const IDSPage = () => {
     const [startSuggestions, setStartSuggestions] = useState([]);
     const [targetSuggestions, setTargetSuggestions] = useState([]);
     const [clickedEdge, setClickedEdge] = useState(null);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         let interval;
@@ -70,6 +71,7 @@ const IDSPage = () => {
     const handleIDSClick = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+        setError(null);
         try {
             const formattedStartArticle = startArticle.replace(/ /g, '_');
             const formattedTargetArticle = targetArticle.replace(/ /g, '_');
@@ -80,7 +82,15 @@ const IDSPage = () => {
             // Make API request with full URLs
             //const response = await fetch(`http://localhost:8080/shortestpath?start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
             const response = await fetch(`http://localhost:8080/shortestpath?algorithm=ids&start=${encodeURIComponent(fullStartArticleURL)}&target=${encodeURIComponent(fullTargetArticleURL)}`);
+            if (!response.ok) {
+                throw new Error('Articles invalid or no route found!');
+            }
             const data = await response.json();
+
+            // Check if result is empty
+            if (!data.path || data.path.length === 0) {
+                throw new Error('No path found');
+            }
 
             const nodes = data.path.map((url, index) => {
                 const pageName = url.split('/').pop(); // ambil nama aja
@@ -103,6 +113,7 @@ const IDSPage = () => {
             console.log('Data fetched successfully:', data);
         } catch (error) {
             console.error('Error fetching data:', error);
+            setError(error.message);
             setIsLoading(false);
         }
     };
@@ -214,6 +225,12 @@ const IDSPage = () => {
                         </div>
                     </div>
                 ) : null}
+                {error && (
+                    <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+                        <p>{error}</p>
+                        <button className="close-button" onClick={() => setError(null)}>Close</button>
+                    </div>
+                )}
             </div>
             <div>
                 <button className="back-button3" onClick={handleBack}>

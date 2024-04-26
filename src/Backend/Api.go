@@ -28,6 +28,16 @@ type ShortestPathResult struct {
     ExecutionTime   time.Duration `json:"executionTime"`
 }
 
+func validateURL(url string) bool {
+    resp, err := http.Get(url)
+    if err != nil {
+        log.Printf("Failed to fetch URL %s: %v", url, err)
+        return false
+    }
+    defer resp.Body.Close()
+    return resp.StatusCode == 200
+}
+
 func BFSHandler(w http.ResponseWriter, r *http.Request) {
     
     startArticle := r.URL.Query().Get("start")
@@ -41,6 +51,12 @@ func BFSHandler(w http.ResponseWriter, r *http.Request) {
 
     fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
     fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
+
+    // Validate URLs
+    if !validateURL(fullStartURL) || !validateURL(fullTargetURL) {
+        http.Error(w, "Start or target articles do not exist", http.StatusBadRequest)
+        return
+    }
 
     path, articlesVisited, articlesChecked, execTime := BFS(fullStartURL, fullTargetURL)
 
@@ -77,6 +93,12 @@ func IDSHandler(w http.ResponseWriter, r *http.Request, f *os.File) {
 
     fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
     fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
+
+    // Validate URLs
+    if !validateURL(fullStartURL) || !validateURL(fullTargetURL) {
+        http.Error(w, "Start or target articles do not exist", http.StatusBadRequest)
+        return
+    }
 
     path, articlesVisited, articlesChecked, execTime := IDS(fullStartURL, fullTargetURL, f)
 
@@ -268,12 +290,14 @@ func getLinks(URL string) []string {
 
     resp, err := http.Get(URL)
     if err != nil {
-        log.Fatal(err)
+        log.Printf("Error fetching URL %s: %v", URL, err)
+        return nil // Return nil or an empty slice depending on your use case
     }
     defer resp.Body.Close()
 
     if resp.StatusCode != 200 {
-        log.Fatalf("status code error: %d %s", resp.StatusCode, resp.Status)
+        log.Printf("Status code error: %d %s", resp.StatusCode, resp.Status)
+        return nil
     }
 
     doc, err := goquery.NewDocumentFromReader(resp.Body)
@@ -351,16 +375,31 @@ func ShortestPathHandler(w http.ResponseWriter, r *http.Request) {
     }
 }
 
+func recoverMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        defer func() {
+            if err := recover(); err != nil {
+                log.Printf("Recovered from a panic: %v", err)
+                http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+            }
+        }()
+        next.ServeHTTP(w, r)
+    })
+}
+
 func main() {
     corsHandler := cors.New(cors.Options{
-        AllowedOrigins:   []string{"http://localhost:3000"},
+        AllowedOrigins: []string{"http://localhost:3000"},
         AllowCredentials: true,
     })
 
-    
-    handler := corsHandler.Handler(http.DefaultServeMux)
+    mux := http.NewServeMux()
+    mux.HandleFunc("/shortestpath", ShortestPathHandler)
 
-    http.HandleFunc("/shortestpath", ShortestPathHandler)
+    handler := corsHandler.Handler(recoverMiddleware(mux))
+
     fmt.Println("Server listening on port 8080...")
-    log.Fatal(http.ListenAndServe(":8080", handler))
+    if err := http.ListenAndServe(":8080", handler); err != nil {
+        log.Printf("Error starting server: %s", err)
+    }
 }
