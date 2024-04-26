@@ -291,7 +291,7 @@ func getLinks(URL string) []string {
     resp, err := http.Get(URL)
     if err != nil {
         log.Printf("Error fetching URL %s: %v", URL, err)
-        return nil // Return nil or an empty slice depending on your use case
+        return nil
     }
     defer resp.Body.Close()
 
