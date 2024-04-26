@@ -28,16 +28,6 @@ type ShortestPathResult struct {
     ExecutionTime   time.Duration `json:"executionTime"`
 }
 
-func validateURL(url string) bool {
-    resp, err := http.Get(url)
-    if err != nil {
-        log.Printf("Failed to fetch URL %s: %v", url, err)
-        return false
-    }
-    defer resp.Body.Close()
-    return resp.StatusCode == 200
-}
-
 func BFSHandler(w http.ResponseWriter, r *http.Request) {
     
     startArticle := r.URL.Query().Get("start")
@@ -51,12 +41,6 @@ func BFSHandler(w http.ResponseWriter, r *http.Request) {
 
     fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
     fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
-
-    // Validate URLs
-    if !validateURL(fullStartURL) || !validateURL(fullTargetURL) {
-        http.Error(w, "Start or target articles do not exist", http.StatusBadRequest)
-        return
-    }
 
     path, articlesVisited, articlesChecked, execTime := BFS(fullStartURL, fullTargetURL)
 
@@ -93,12 +77,6 @@ func IDSHandler(w http.ResponseWriter, r *http.Request, f *os.File) {
 
     fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
     fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
-
-    // Validate URLs
-    if !validateURL(fullStartURL) || !validateURL(fullTargetURL) {
-        http.Error(w, "Start or target articles do not exist", http.StatusBadRequest)
-        return
-    }
 
     path, articlesVisited, articlesChecked, execTime := IDS(fullStartURL, fullTargetURL, f)
 
@@ -208,46 +186,67 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 
 
 
-func IDS(startURL, endURL string,  file *os.File) ([]string, int, int, time.Duration) {
-	startTime := time.Now()
-	visited := make(map[string]bool)
-	stack := []*Node{{URL: startURL, Depth: 0}}
-	var depthLimit, visits, checks int
-	var result []string
+func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Duration) {
+    startTime := time.Now()
+    visited := make(map[string]bool)
+    stack := []*Node{{URL: startURL, Depth: 0}}
+    var visits, checks int
+    var result []string
 
-	var wg sync.WaitGroup
-	var mutex sync.Mutex
+    var wg sync.WaitGroup
 
-    checks = 0
+    // semaphore := make(chan struct{}, 5) // Batasan goroutine menjadi 5
 
-	runSearch := func(stack []*Node, endURL string, depthLimit int, file *os.File, visited map[string]bool) ([]string, int, int, bool) {
-		defer wg.Done()
-		mutex.Lock()
-		defer mutex.Unlock()
-		return DLS(stack, endURL, depthLimit, file, visited)
-	}
+    runSearch := func(stack []*Node, endURL string, depthLimit int, file *os.File, visited map[string]bool) ([]string, int, int, bool) {
+        defer wg.Done()
+        // semaphore <- struct{}{} // Ambil slot di semaphore
+        // defer func() {
+        //     <-semaphore // Bebaskan slot di semaphore
+        // }()
+        return DLS(stack, endURL, depthLimit, file, visited)
+    }
 
-	for {
-		wg.Add(1)
-		path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
-		wg.Wait()
-		if found {
-			result = path
-			visits = localVisits
-			checks = localChecks
-			break
-		}
-		depthLimit++
-	}
+    localfound := false
+    for depthLimit := 0; depthLimit <= 4; depthLimit++ {
+        wg.Add(1)
+        path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
+        if found {
+            localfound = true
+            result = path
+            visits = localVisits
+            checks = localChecks
+            break
+        }
+    }
 
-	return result, visits, checks, time.Since(startTime)
+    if !localfound{
+        for depthLimit := 4; depthLimit <= 9; depthLimit++ {
+            wg.Add(1)
+            path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
+            if found {
+                localfound = true
+                result = path
+                visits = localVisits
+                checks = localChecks
+                break
+            }
+        }
+    }
+
+
+    wg.Wait() // Tunggu semua goroutine selesai
+
+    return result, visits, checks, time.Since(startTime)
 }
 
 var checks int
 
 func DLS(stack []*Node, endURL string, depthLimit int, f *os.File, visited map[string]bool) ([]string, int, int, bool) {
-	current := stack[len(stack)-1]
-	f.WriteString(fmt.Sprintf("Scraping: %s\n", current.URL))
+
+    var mutex sync.Mutex
+
+    mutex.Lock()
+    current := stack[len(stack)-1]
 
 	if !visited[current.URL] {
 		if current.URL != stack[0].URL {
@@ -258,10 +257,12 @@ func DLS(stack []*Node, endURL string, depthLimit int, f *os.File, visited map[s
 
 	if current.URL == endURL {
 		path := getPath(current)
+        mutex.Unlock()
 		return path, len(path) - 1, checks, true
 	}
 
 	if depthLimit <= 0 {
+        mutex.Unlock()
 		return nil, 0, checks, false
 	}
 
@@ -272,10 +273,11 @@ func DLS(stack []*Node, endURL string, depthLimit int, f *os.File, visited map[s
 		stack = append(stack, child)
 		path, vis, chk, found := DLS(stack, endURL, depthLimit-1, f, visited)
 		if found {
+            mutex.Unlock()
 			return path, vis, chk, true
 		}
 	}
-
+    mutex.Unlock()
 	return nil, 0, checks, false
 }
 
@@ -294,14 +296,12 @@ func getLinks(URL string) []string {
 
     resp, err := http.Get(URL)
     if err != nil {
-        log.Printf("Error fetching URL %s: %v", URL, err)
-        return nil
+        log.Fatal(err)
     }
     defer resp.Body.Close()
 
     if resp.StatusCode != 200 {
-        log.Printf("Status code error: %d %s", resp.StatusCode, resp.Status)
-        return nil
+        log.Fatalf("status code error: %d %s", resp.StatusCode, resp.Status)
     }
 
     doc, err := goquery.NewDocumentFromReader(resp.Body)
@@ -379,31 +379,16 @@ func ShortestPathHandler(w http.ResponseWriter, r *http.Request) {
     }
 }
 
-func recoverMiddleware(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        defer func() {
-            if err := recover(); err != nil {
-                log.Printf("Recovered from a panic: %v", err)
-                http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-            }
-        }()
-        next.ServeHTTP(w, r)
-    })
-}
-
 func main() {
     corsHandler := cors.New(cors.Options{
-        AllowedOrigins: []string{"http://localhost:3000"},
+        AllowedOrigins:   []string{"http://localhost:3000"},
         AllowCredentials: true,
     })
 
-    mux := http.NewServeMux()
-    mux.HandleFunc("/shortestpath", ShortestPathHandler)
+    
+    handler := corsHandler.Handler(http.DefaultServeMux)
 
-    handler := corsHandler.Handler(recoverMiddleware(mux))
-
+    http.HandleFunc("/shortestpath", ShortestPathHandler)
     fmt.Println("Server listening on port 8080...")
-    if err := http.ListenAndServe(":8080", handler); err != nil {
-        log.Printf("Error starting server: %s", err)
-    }
+    log.Fatal(http.ListenAndServe(":8080", handler))
 }
