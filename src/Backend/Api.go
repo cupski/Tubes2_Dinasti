@@ -123,6 +123,10 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 
     var mutex sync.Mutex
 
+    if startURL == endURL {
+        return []string{startURL}, 0, 0, time.Since(start)
+    }
+
     for len(queue) > 0 {
         batch := queue[:min(len(queue), batchSize)]
         queue = queue[min(len(queue), batchSize):]
