@@ -170,12 +170,14 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
         if found {
             end := time.Since(start)
             path := getPath(foundNode)
-            return path, len(visited), articlesChecked, end
+            articlesVisited := len(path) // Calculate the number of articles visited based on the path length
+            return path, articlesVisited, articlesChecked, end
         }
     }
 
-    return nil, len(visited), articlesChecked, time.Since(start)
+    return nil, 0, articlesChecked, time.Since(start)
 }
+
 
 
 
