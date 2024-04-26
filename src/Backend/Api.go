@@ -119,12 +119,6 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     visited[startURL] = true
     batchSize := 15
 
-    file, err := os.Create("log-bfs.txt")
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer file.Close()
-
     start := time.Now()
 
     var mutex sync.Mutex
@@ -147,17 +141,18 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
                 for _, link := range links {
                     if !visited[link] {
                         articlesChecked++
-                        visited[link] = true
-                        child := &Node{URL: link, Parent: current}
-                        current.Children = append(current.Children, child)
-                        queue = append(queue, child)
 
                         if link == endURL {
                             found = true
-                            foundNode = child
+                            foundNode = &Node{URL: link, Parent: current}
                             mutex.Unlock()
                             return
                         }
+
+                        visited[link] = true
+                        child := &Node{URL: link, Parent: current}
+                        current.Children = append(current.Children, child)
+                        queue = append(queue, child)                     
                     }
                 }
                 mutex.Unlock()
