@@ -137,6 +137,8 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 
         for _, current := range batch {
             wg.Add(1)
+            fmt.Println("URL: ", current.URL)
+            fmt.Println("Articles Checked: ", articlesChecked)
             go func(current *Node) {
                 defer wg.Done()
                 links := getLinks(current.URL)
