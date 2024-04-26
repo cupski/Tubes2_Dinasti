@@ -110,7 +110,7 @@ func min(a, b int) int {
     }
     return b
 }
-	
+
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     var articlesChecked int
 
@@ -128,6 +128,7 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     }
 
     for len(queue) > 0 {
+        batchSize = min(len(queue), batchSize*2)
         batch := queue[:min(len(queue), batchSize)]
         queue = queue[min(len(queue), batchSize):]
 
