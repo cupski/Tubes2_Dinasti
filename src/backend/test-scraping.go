@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	startURL := "https://en.wikipedia.org/wiki/Vario"
+	startURL := "https://en.wikipedia.org/wiki/Vehicular_automation"
 
 	fmt.Println("Scraping contents of the start URL:", startURL)
 	startLinks := getLinks(startURL)

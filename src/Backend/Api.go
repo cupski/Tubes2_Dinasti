@@ -112,12 +112,11 @@ func min(a, b int) int {
 }
 	
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
-    var path []string
     var articlesChecked int
 
-    endFoundCh := make(chan bool, 1)
     visited := make(map[string]bool)
     queue := []*Node{{URL: startURL}}
+    visited[startURL] = true
     batchSize := 15
 
     file, err := os.Create("log-bfs.txt")
@@ -131,62 +130,53 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     var mutex sync.Mutex
 
     for len(queue) > 0 {
-        batch := queue[:min(len(queue), batchSize)] // pilih batch size dari queue
+        batch := queue[:min(len(queue), batchSize)]
         queue = queue[min(len(queue), batchSize):]
 
-        
         var wg sync.WaitGroup
+        found := false
+        var foundNode *Node
+
         for _, current := range batch {
-            msg := fmt.Sprintf("Checking queue for: %s\n", current.URL)
-            file.WriteString(msg)
             wg.Add(1)
             go func(current *Node) {
                 defer wg.Done()
                 links := getLinks(current.URL)
 
                 mutex.Lock()
-                defer mutex.Unlock()
-
                 for _, link := range links {
                     if !visited[link] {
-                        if link != startURL {
-                            articlesChecked++
-                        }
+                        articlesChecked++
                         visited[link] = true
-                    }
+                        child := &Node{URL: link, Parent: current}
+                        current.Children = append(current.Children, child)
+                        queue = append(queue, child)
 
-                    file.WriteString(fmt.Sprintf("Scraping: %s\n", link))
-
-                    if link == endURL {
-                        endFoundCh <- true // Send signal that end found
-                        return
+                        if link == endURL {
+                            found = true
+                            foundNode = child
+                            mutex.Unlock()
+                            return
+                        }
                     }
                 }
+                mutex.Unlock()
             }(current)
-        }
-
-        wg.Wait()
-
-        select {
-        case <-endFoundCh:
-            end := time.Since(start)
-            path = getPath(&Node{URL: endURL, Parent: queue[0]})
-            return path, len(path) - 1, articlesChecked, end
-        default:
-            for _, current := range batch {
-                links := getLinks(current.URL)
-                for _, link := range links {
-                    child := &Node{URL: link, Parent: current}
-                    current.Children = append(current.Children, child)
-                    queue = append(queue, child)
-                }
+            if found {
+                break
             }
+        }
+        wg.Wait()
+        if found {
+            end := time.Since(start)
+            path := getPath(foundNode)
+            return path, len(visited), articlesChecked, end
         }
     }
 
-    close(endFoundCh)
-    return nil, 0, articlesChecked, 0
+    return nil, len(visited), articlesChecked, time.Since(start)
 }
+
 
 
 
