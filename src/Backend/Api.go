@@ -128,6 +128,7 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     }
 
     for len(queue) > 0 {
+        time.Sleep(5 * time.Millisecond)
         batch := queue[:min(len(queue), batchSize)]
         queue = queue[min(len(queue), batchSize):]
 
@@ -190,19 +191,15 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
 
     var wg sync.WaitGroup
 
-    // semaphore := make(chan struct{}, 5) // Batasan goroutine menjadi 5
 
     runSearch := func(stack []*Node, endURL string, depthLimit int, file *os.File, visited map[string]bool) ([]string, int, int, bool) {
         defer wg.Done()
-        // semaphore <- struct{}{} // Ambil slot di semaphore
-        // defer func() {
-        //     <-semaphore // Bebaskan slot di semaphore
-        // }()
         return DLS(stack, endURL, depthLimit, file, visited)
     }
 
     localfound := false
-    for depthLimit := 0; depthLimit <= 4; depthLimit++ {
+    for depthLimit := 0; depthLimit <= 5; depthLimit++ {
+        time.Sleep(20 * time.Millisecond)
         wg.Add(1)
         path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
         if found {
@@ -215,7 +212,8 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
     }
 
     if !localfound{
-        for depthLimit := 4; depthLimit <= 9; depthLimit++ {
+        for depthLimit := 5; depthLimit <= 9; depthLimit++ {
+            time.Sleep(20 * time.Millisecond)
             wg.Add(1)
             path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
             if found {
@@ -229,7 +227,7 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
     }
 
 
-    wg.Wait() // Tunggu semua goroutine selesai
+    wg.Wait() 
 
     return result, visits, checks, time.Since(startTime)
 }
