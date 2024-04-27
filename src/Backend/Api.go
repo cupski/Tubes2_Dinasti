@@ -137,6 +137,7 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
         var foundNode *Node
 
         for _, current := range batch {
+            time.Sleep(5 * time.Millisecond)
             wg.Add(1)
             fmt.Println("URL: ", current.URL)
             fmt.Println("Articles Checked: ", articlesChecked)
@@ -206,6 +207,7 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
 
     localfound := false
     for depthLimit := 0; depthLimit <= 4; depthLimit++ {
+        time.Sleep(20 * time.Millisecond)
         wg.Add(1)
         path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
         if found {
@@ -219,6 +221,7 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
 
     if !localfound{
         for depthLimit := 4; depthLimit <= 9; depthLimit++ {
+            time.Sleep(20 * time.Millisecond)
             wg.Add(1)
             path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
             if found {
@@ -245,6 +248,8 @@ func DLS(stack []*Node, endURL string, depthLimit int, f *os.File, visited map[s
 
     mutex.Lock()
     current := stack[len(stack)-1]
+    fmt.Println("URL: ", current.URL)
+    fmt.Println("Articles Checked: ", checks)
 
 	if !visited[current.URL] {
 		if current.URL != stack[0].URL {
@@ -285,24 +290,41 @@ func extractArticleName(url string) string {
     return parts[len(parts)-1]
 }
 
-var linkCache sync.Map
+var (
+    linkCache  sync.Map
+    htmlCache  sync.Map
+)
+
+func getHTMLContent(URL string) (*goquery.Document, error) {
+    if value, ok := htmlCache.Load(URL); ok {
+        return value.(*goquery.Document), nil
+    }
+
+    resp, err := http.Get(URL)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != 200 {
+        return nil, fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
+    }
+
+    doc, err := goquery.NewDocumentFromReader(resp.Body)
+    if err != nil {
+        return nil, err
+    }
+
+    htmlCache.Store(URL, doc)
+    return doc, nil
+}
 
 func getLinks(URL string) []string {
     if value, ok := linkCache.Load(URL); ok {
         return value.([]string)
     }
 
-    resp, err := http.Get(URL)
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer resp.Body.Close()
-
-    if resp.StatusCode != 200 {
-        log.Fatalf("status code error: %d %s", resp.StatusCode, resp.Status)
-    }
-
-    doc, err := goquery.NewDocumentFromReader(resp.Body)
+    doc, err := getHTMLContent(URL)
     if err != nil {
         log.Fatal(err)
     }
