@@ -142,54 +142,45 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     batchSize := 15
 
     start := time.Now()
-
     var mutex sync.Mutex
-    var articlesMutex sync.Mutex
 
     if startURL == endURL {
         return []string{startURL}, 0, 0, time.Since(start)
     }
-
+    
     for len(queue) > 0 {
-        batchSize = min(len(queue), batchSize*2)
         batch := queue[:min(len(queue), batchSize)]
         queue = queue[min(len(queue), batchSize):]
+
 
         var wg sync.WaitGroup
         found := false
         var foundNode *Node
 
         for _, current := range batch {
-            time.Sleep(5 * time.Millisecond)
             wg.Add(1)
-            fmt.Println("URL: ", current.URL)
-            fmt.Println("Articles Checked: ", articlesChecked)
             go func(current *Node) {
                 defer wg.Done()
                 links := getLinks(current.URL)
 
-
                 mutex.Lock()
+
                 for _, link := range links {
                     if !visited[link] {
-                        articlesMutex.Lock()
                         articlesChecked++
-                        articlesMutex.Unlock()
-                        visited[link] = true                
-                    }
+                        visited[link] = true
 
-                    
-                    if link == endURL {
-                        found = true
-                        foundNode = &Node{URL: link, Parent: current}
-                        mutex.Unlock()
-                        return
-                    }
+                        child := &Node{URL: link, Parent: current}
+                        current.Children = append(current.Children, child)
+                        queue = append(queue, child)
 
-                    
-                    child := &Node{URL: link, Parent: current}
-                    current.Children = append(current.Children, child)
-                    queue = append(queue, child)     
+                        if link == endURL {
+                            found = true
+                            foundNode = child
+                            mutex.Unlock()
+                            return
+                        }
+                    }
                 }
                 mutex.Unlock()
             }(current)
@@ -197,18 +188,17 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
                 break
             }
         }
+
         wg.Wait()
+
         if found {
             end := time.Since(start)
             path := getPath(foundNode)
-            articlesVisited := len(path)
-            return path, articlesVisited, articlesChecked, end
+            return path, len(visited)-1, articlesChecked, end
         }
     }
-
-    return nil, 0, articlesChecked, time.Since(start)
+    return nil, len(visited)-1, articlesChecked, time.Since(start)
 }
-
 
 
 
