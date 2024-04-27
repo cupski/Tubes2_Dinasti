@@ -346,7 +346,10 @@ func getLinks(URL string) []string {
 
     doc, err := getHTMLContent(URL)
     if err != nil {
-        log.Fatal(err)
+        log.Printf("Failed to fetch HTML content for %s: %v", URL, err)
+        // handle 404 error -> langsung mark visited aja
+        linkCache.Store(URL, []string{})
+        return []string{}
     }
 
     var prefixes = []string{
@@ -390,6 +393,7 @@ func getLinks(URL string) []string {
     linkCache.Store(URL, links)
     return links
 }
+
 
 
 func getPath(endNode *Node) []string {
