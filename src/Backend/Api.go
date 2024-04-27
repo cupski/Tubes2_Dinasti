@@ -28,6 +28,16 @@ type ShortestPathResult struct {
     ExecutionTime   time.Duration `json:"executionTime"`
 }
 
+func validateURL(url string) bool {
+    resp, err := http.Get(url)
+    if err != nil {
+        log.Printf("Failed to fetch URL %s: %v", url, err)
+        return false
+    }
+    defer resp.Body.Close()
+    return resp.StatusCode == 200
+}
+
 func BFSHandler(w http.ResponseWriter, r *http.Request) {
     
     startArticle := r.URL.Query().Get("start")
@@ -41,6 +51,12 @@ func BFSHandler(w http.ResponseWriter, r *http.Request) {
 
     fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
     fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
+
+    // Validate URLs
+    if !validateURL(fullStartURL) || !validateURL(fullTargetURL) {
+        http.Error(w, "Start or target articles do not exist", http.StatusBadRequest)
+        return
+    }
 
     path, articlesVisited, articlesChecked, execTime := BFS(fullStartURL, fullTargetURL)
 
@@ -77,6 +93,12 @@ func IDSHandler(w http.ResponseWriter, r *http.Request, f *os.File) {
 
     fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
     fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
+
+    // Validate URLs
+    if !validateURL(fullStartURL) || !validateURL(fullTargetURL) {
+        http.Error(w, "Start or target articles do not exist", http.StatusBadRequest)
+        return
+    }
 
     path, articlesVisited, articlesChecked, execTime := IDS(fullStartURL, fullTargetURL, f)
 
