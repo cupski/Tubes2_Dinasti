@@ -149,19 +149,22 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     start := time.Now()
     var mutex sync.Mutex
 
+    // Jika URL awal dan akhir sama, kembalikan jalur yang hanya berisi URL awal
     if startURL == endURL {
         return []string{startURL}, 0, 0, time.Since(start)
     }
     
     for len(queue) > 0 {
+        // Ekstrak sebuah batch URL dari antrian berdasarkan ukuran batch
         batch := queue[:min(len(queue), batchSize)]
         queue = queue[min(len(queue), batchSize):]
 
 
-        var wg sync.WaitGroup
-        found := false
+        var wg sync.WaitGroup // Gunakan WaitGroup untuk menyinkronkan goroutine
+        found := false // Flag untuk menandakan jika URL akhir ditemukan dalam batch saat ini
         var foundNode *Node
 
+        // Iterasi setiap URL dalam batch dan proses secara bersamaan
         for _, current := range batch {
             wg.Add(1)
             go func(current *Node) {
@@ -170,11 +173,13 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 
                 mutex.Lock()
 
+                // Iterasi setiap tautan dan prosesnya
                 for _, link := range links {
                     if !visited[link] {
-                        articlesChecked++
+                        articlesChecked++ // Tambahkan jumlah artikel yang diperiksa
                         visited[link] = true
 
+                        // Buat node anak untuk tautan saat ini
                         child := &Node{URL: link, Parent: current}
                         current.Children = append(current.Children, child)
                         queue = append(queue, child)
@@ -194,20 +199,22 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
             }
         }
 
-        wg.Wait()
+        wg.Wait()  // Tunggu semua goroutine dalam batch selesai diproses
 
         if found {
             end := time.Since(start)
-            path := getPath(foundNode)
+            path := getPath(foundNode)  // Dapatkan jalur terpendek dari foundNode
             return path, len(visited)-1, articlesChecked, end
         }
     }
+
+    // Jika URL akhir tidak ditemukan, kembalikan nilai-nilai nol untuk jalur dan metrik lainnya
     return nil, len(visited)-1, articlesChecked, time.Since(start)
 }
 
 
 
-
+//fungsi ids
 func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Duration) {
     startTime := time.Now()
     visited := make(map[string]bool)
@@ -217,13 +224,15 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
 
     var wg sync.WaitGroup
 
-
+    // Fungsi untuk menjalankan goroutine dalam pencarian dengan batasan kedalaman tertentu
     runSearch := func(stack []*Node, endURL string, depthLimit int, file *os.File, visited map[string]bool) ([]string, int, int, bool) {
         defer wg.Done()
         return DLS(stack, endURL, depthLimit, file, visited)
     }
 
-    localfound := false
+    localfound := false // Flag untuk menandakan jika URL akhir ditemukan secara lokal
+
+    // Lakukan IDS dengan batasan kedalaman dari 0 hingga 5, sehingga hanya ada 5 goroutine dulu berjalan bersamaan
     for depthLimit := 0; depthLimit <= 5; depthLimit++ {
         time.Sleep(5 * time.Millisecond)
         wg.Add(1)
@@ -237,6 +246,7 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
         }
     }
 
+    // Jika URL akhir tidak ditemukan dalam batasan kedalaman 0 hingga 5, lanjutkan dengan batasan 5 hingga 9
     if !localfound{
         for depthLimit := 5; depthLimit <= 9; depthLimit++ {
             time.Sleep(5 * time.Millisecond)
@@ -253,19 +263,19 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
     }
 
 
-    wg.Wait() 
+    wg.Wait() // Tunggu semua goroutine selesai
 
     return result, visits, checks, time.Since(startTime)
 }
 
-var checks int
+var checks int // Variabel global untuk menyimpan jumlah pemeriksaan artikel di IDS
 
 // fungsi dls 
 // -> dipakai di ids
 func DLS(stack []*Node, endURL string, depthLimit int, f *os.File, visited map[string]bool) ([]string, int, int, bool) {
 
     var mutex sync.Mutex
-    var articlesMutex sync.Mutex
+    var articlesMutex sync.Mutex // Mutex untuk sinkronisasi akses ke variabel jumlah pemeriksaan artikel
 
     mutex.Lock()
     current := stack[len(stack)-1]
@@ -287,18 +297,23 @@ func DLS(stack []*Node, endURL string, depthLimit int, f *os.File, visited map[s
 		return path, len(path) - 1, checks, true
 	}
 
+    // Jika kedalaman batasan telah tercapai, kembalikan tanpa menemukan jalur
 	if depthLimit <= 0 {
         mutex.Unlock()
 		return nil, 0, checks, false
 	}
 
 	links := getLinks(current.URL)
+    // Iterasi setiap tautan dan tambahkan anak ke stack untuk dilakukan pencarian lebih lanjut
 	for _, link := range links {
 		child := &Node{URL: link, Parent: current}
 		current.Children = append(current.Children, child)
 		stack = append(stack, child)
+        // Lakukan DLS rekursif pada anak ini
 		path, vis, chk, found := DLS(stack, endURL, depthLimit-1, f, visited)
-		if found {
+		
+        // Jika jalur ditemukan, kembalikan jalur tersebut
+        if found {
             mutex.Unlock()
 			return path, vis, chk, true
 		}
