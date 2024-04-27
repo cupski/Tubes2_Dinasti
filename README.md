@@ -6,6 +6,8 @@
 | :------: | :------------------------------------: |
 | 13522009 |          Muhammad Yusuf Rafi           |
 | 13522013 |        Denise Felicia Tiowanni         |
+| 10023570 |           Rafii Ahmad Fahreza          |
+
 
 
 ## Deskripsi Program
