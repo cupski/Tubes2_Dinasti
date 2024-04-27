@@ -141,19 +141,20 @@ func min(a, b int) int {
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     var articlesChecked int
 
-    visited := make(map[string]bool) // map untuk keep track visited URLs
-    queue := []*Node{{URL: startURL}} // init queue -> isinya startURL
+    visited := make(map[string]bool)
+    queue := []*Node{{URL: startURL}}
     visited[startURL] = true
-    batchSize := 15 // batch size untuk mengatur jumlah URL yang diambil dari queue
+    batchSize := 15
 
     start := time.Now()
+
     var mutex sync.Mutex
 
     // Jika URL awal dan akhir sama, kembalikan jalur yang hanya berisi URL awal
     if startURL == endURL {
         return []string{startURL}, 0, 0, time.Since(start)
     }
-    
+
     for len(queue) > 0 {
         // Ekstrak sebuah batch URL dari antrian berdasarkan ukuran batch
         batch := queue[:min(len(queue), batchSize)]
@@ -166,6 +167,9 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
 
         // Iterasi setiap URL dalam batch dan proses secara bersamaan
         for _, current := range batch {
+            time.Sleep(1 * time.Millisecond) // delay biar ga ke block wikipedianya
+            fmt.Println("URL: ", current.URL)
+            fmt.Println("Articles Checked: ", articlesChecked)
             wg.Add(1)
             go func(current *Node) {
                 defer wg.Done()
@@ -204,7 +208,8 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
         if found {
             end := time.Since(start)
             path := getPath(foundNode)  // Dapatkan jalur terpendek dari foundNode
-            return path, len(visited)-1, articlesChecked, end
+            articlesVisited := len(path)
+            return path, articlesVisited-1, articlesChecked, end
         }
     }
 
@@ -234,7 +239,7 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
 
     // Lakukan IDS dengan batasan kedalaman dari 0 hingga 5, sehingga hanya ada 5 goroutine dulu berjalan bersamaan
     for depthLimit := 0; depthLimit <= 5; depthLimit++ {
-        time.Sleep(5 * time.Millisecond)
+        // time.Sleep(5 * time.Millisecond)
         wg.Add(1)
         path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
         if found {
@@ -249,7 +254,7 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
     // Jika URL akhir tidak ditemukan dalam batasan kedalaman 0 hingga 5, lanjutkan dengan batasan 5 hingga 9
     if !localfound{
         for depthLimit := 5; depthLimit <= 9; depthLimit++ {
-            time.Sleep(5 * time.Millisecond)
+            // time.Sleep(5 * time.Millisecond)
             wg.Add(1)
             path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
             if found {
