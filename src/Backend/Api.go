@@ -28,6 +28,16 @@ type ShortestPathResult struct {
     ExecutionTime   time.Duration `json:"executionTime"`
 }
 
+func validateURL(url string) bool {
+    resp, err := http.Get(url)
+    if err != nil {
+        log.Printf("Failed to fetch URL %s: %v", url, err)
+        return false
+    }
+    defer resp.Body.Close()
+    return resp.StatusCode == 200
+}
+
 func BFSHandler(w http.ResponseWriter, r *http.Request) {
     
     startArticle := r.URL.Query().Get("start")
@@ -41,6 +51,12 @@ func BFSHandler(w http.ResponseWriter, r *http.Request) {
 
     fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
     fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
+
+    // Validate URLs
+    if !validateURL(fullStartURL) || !validateURL(fullTargetURL) {
+        http.Error(w, "Start or target articles do not exist", http.StatusBadRequest)
+        return
+    }
 
     path, articlesVisited, articlesChecked, execTime := BFS(fullStartURL, fullTargetURL)
 
@@ -77,6 +93,12 @@ func IDSHandler(w http.ResponseWriter, r *http.Request, f *os.File) {
 
     fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
     fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
+
+    // Validate URLs
+    if !validateURL(fullStartURL) || !validateURL(fullTargetURL) {
+        http.Error(w, "Start or target articles do not exist", http.StatusBadRequest)
+        return
+    }
 
     path, articlesVisited, articlesChecked, execTime := IDS(fullStartURL, fullTargetURL, f)
 
@@ -122,6 +144,7 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     start := time.Now()
 
     var mutex sync.Mutex
+    var articlesMutex sync.Mutex
 
     if startURL == endURL {
         return []string{startURL}, 0, 0, time.Since(start)
@@ -149,7 +172,9 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
                 mutex.Lock()
                 for _, link := range links {
                     if !visited[link] {
+                        articlesMutex.Lock()
                         articlesChecked++
+                        articlesMutex.Unlock()
                         visited[link] = true                
                     }
 
@@ -205,7 +230,7 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
 
     localfound := false
     for depthLimit := 0; depthLimit <= 5; depthLimit++ {
-        time.Sleep(20 * time.Millisecond)
+        time.Sleep(5 * time.Millisecond)
         wg.Add(1)
         path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
         if found {
@@ -219,7 +244,7 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
 
     if !localfound{
         for depthLimit := 5; depthLimit <= 9; depthLimit++ {
-            time.Sleep(20 * time.Millisecond)
+            time.Sleep(5 * time.Millisecond)
             wg.Add(1)
             path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
             if found {
@@ -243,6 +268,7 @@ var checks int
 func DLS(stack []*Node, endURL string, depthLimit int, f *os.File, visited map[string]bool) ([]string, int, int, bool) {
 
     var mutex sync.Mutex
+    var articlesMutex sync.Mutex
 
     mutex.Lock()
     current := stack[len(stack)-1]
@@ -251,7 +277,9 @@ func DLS(stack []*Node, endURL string, depthLimit int, f *os.File, visited map[s
 
 	if !visited[current.URL] {
 		if current.URL != stack[0].URL {
+            articlesMutex.Lock()
 			checks++
+            articlesMutex.Unlock()
 		}
         visited[current.URL] = true
 	}
@@ -324,7 +352,10 @@ func getLinks(URL string) []string {
 
     doc, err := getHTMLContent(URL)
     if err != nil {
-        log.Fatal(err)
+        log.Printf("Failed to fetch HTML content for %s: %v", URL, err)
+        // handle 404 error -> langsung mark visited aja
+        linkCache.Store(URL, []string{})
+        return []string{}
     }
 
     var prefixes = []string{
@@ -368,6 +399,7 @@ func getLinks(URL string) []string {
     linkCache.Store(URL, links)
     return links
 }
+
 
 
 func getPath(endNode *Node) []string {
