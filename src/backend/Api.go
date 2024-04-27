@@ -141,61 +141,53 @@ func min(a, b int) int {
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     var articlesChecked int
 
-    visited := make(map[string]bool) // map untuk keep track visited URLs
-    queue := []*Node{{URL: startURL}} // init queue -> isinya startURL
+    visited := make(map[string]bool)
+    queue := []*Node{{URL: startURL}}
     visited[startURL] = true
-    batchSize := 15 // batch size untuk mengatur jumlah URL yang diambil dari queue
+    batchSize := 15
 
     start := time.Now()
 
     var mutex sync.Mutex
-    var articlesMutex sync.Mutex // mutex utk counting articles, biar ga race condition
 
     if startURL == endURL {
         return []string{startURL}, 0, 0, time.Since(start)
-    } // langsung keluar kalo startURL = targetURL
+    }
 
-    // loop sampai queue kosong
     for len(queue) > 0 {
-        batchSize = min(len(queue), batchSize*2)
-        batch := queue[:min(len(queue), batchSize)] // batch of nodes yg mau di proses
-        queue = queue[min(len(queue), batchSize):] // sisanya
+        batch := queue[:min(len(queue), batchSize)]
+        queue = queue[min(len(queue), batchSize):]
 
         var wg sync.WaitGroup
         found := false
         var foundNode *Node
 
+        
         for _, current := range batch {
-            time.Sleep(5 * time.Millisecond) // delay biar ga ke block wikipedianya
-            wg.Add(1)
+            time.Sleep(1 * time.Millisecond) // delay biar ga ke block wikipedianya
             fmt.Println("URL: ", current.URL)
             fmt.Println("Articles Checked: ", articlesChecked)
+            wg.Add(1)
             go func(current *Node) {
                 defer wg.Done()
                 links := getLinks(current.URL)
 
-
                 mutex.Lock()
                 for _, link := range links {
                     if !visited[link] {
-                        articlesMutex.Lock()
                         articlesChecked++
-                        articlesMutex.Unlock()
-                        visited[link] = true                
-                    }
+                        visited[link] = true
+                        child := &Node{URL: link, Parent: current}
+                        current.Children = append(current.Children, child)
+                        queue = append(queue, child)
 
-                    
-                    if link == endURL {
-                        found = true
-                        foundNode = &Node{URL: link, Parent: current}
-                        mutex.Unlock()
-                        return
+                        if link == endURL {
+                            found = true
+                            foundNode = child
+                            mutex.Unlock()
+                            return
+                        }
                     }
-
-                    // bikin child node utk link yg skrg
-                    child := &Node{URL: link, Parent: current}
-                    current.Children = append(current.Children, child)
-                    queue = append(queue, child)     
                 }
                 mutex.Unlock()
             }(current)
@@ -203,12 +195,12 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
                 break
             }
         }
-        wg.Wait() // wait smpe smua goroutines nya beres
+        wg.Wait()
         if found {
             end := time.Since(start)
             path := getPath(foundNode)
             articlesVisited := len(path)
-            return path, articlesVisited, articlesChecked, end
+            return path, articlesVisited-1, articlesChecked, end
         }
     }
 
@@ -233,7 +225,7 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
 
     localfound := false
     for depthLimit := 0; depthLimit <= 5; depthLimit++ {
-        time.Sleep(5 * time.Millisecond)
+        // time.Sleep(5 * time.Millisecond)
         wg.Add(1)
         path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
         if found {
@@ -247,7 +239,7 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
 
     if !localfound{
         for depthLimit := 5; depthLimit <= 9; depthLimit++ {
-            time.Sleep(5 * time.Millisecond)
+            // time.Sleep(5 * time.Millisecond)
             wg.Add(1)
             path, localVisits, localChecks, found := runSearch(stack, endURL, depthLimit, file, visited)
             if found {
