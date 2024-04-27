@@ -28,6 +28,8 @@ type ShortestPathResult struct {
     ExecutionTime   time.Duration `json:"executionTime"`
 }
 
+// validasi input URL
+// -> cek startURL sama targetURL beneran valid apa ngga, kalo ngga gausah lakukan searching 
 func validateURL(url string) bool {
     resp, err := http.Get(url)
     if err != nil {
@@ -38,6 +40,8 @@ func validateURL(url string) bool {
     return resp.StatusCode == 200
 }
 
+// handler untuk bfs search
+// -> ambil startURL dan targetURL dari frontend, return hasil ke frontend juga
 func BFSHandler(w http.ResponseWriter, r *http.Request) {
     
     startArticle := r.URL.Query().Get("start")
@@ -52,7 +56,6 @@ func BFSHandler(w http.ResponseWriter, r *http.Request) {
     fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
     fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
 
-    // Validate URLs
     if !validateURL(fullStartURL) || !validateURL(fullTargetURL) {
         http.Error(w, "Start or target articles do not exist", http.StatusBadRequest)
         return
@@ -84,6 +87,8 @@ func BFSHandler(w http.ResponseWriter, r *http.Request) {
     w.Write(jsonResponse)
 }
 
+// handler untuk ids search
+// -> ambil startURL dan targetURL dari frontend, return hasil ke frontend juga
 func IDSHandler(w http.ResponseWriter, r *http.Request, f *os.File) {
     startArticle := r.URL.Query().Get("start")
     targetArticle := r.URL.Query().Get("target")
@@ -94,7 +99,6 @@ func IDSHandler(w http.ResponseWriter, r *http.Request, f *os.File) {
     fullStartURL := "https://en.wikipedia.org/wiki/" + startArticleName
     fullTargetURL := "https://en.wikipedia.org/wiki/" + targetArticleName
 
-    // Validate URLs
     if !validateURL(fullStartURL) || !validateURL(fullTargetURL) {
         http.Error(w, "Start or target articles do not exist", http.StatusBadRequest)
         return
@@ -133,13 +137,14 @@ func min(a, b int) int {
     return b
 }
 
+// fungsi bfs
 func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     var articlesChecked int
 
-    visited := make(map[string]bool)
-    queue := []*Node{{URL: startURL}}
+    visited := make(map[string]bool) // map untuk keep track visited URLs
+    queue := []*Node{{URL: startURL}} // init queue -> isinya startURL
     visited[startURL] = true
-    batchSize := 15
+    batchSize := 15 // batch size untuk mengatur jumlah URL yang diambil dari queue
 
     start := time.Now()
     var mutex sync.Mutex
@@ -255,6 +260,8 @@ func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Durat
 
 var checks int
 
+// fungsi dls 
+// -> dipakai di ids
 func DLS(stack []*Node, endURL string, depthLimit int, f *os.File, visited map[string]bool) ([]string, int, int, bool) {
 
     var mutex sync.Mutex
@@ -300,7 +307,7 @@ func DLS(stack []*Node, endURL string, depthLimit int, f *os.File, visited map[s
 	return nil, 0, checks, false
 }
 
-
+// ambil nama artikel doang
 func extractArticleName(url string) string {
     parts := strings.Split(url, "/")
     return parts[len(parts)-1]
@@ -311,7 +318,9 @@ var (
     htmlCache  sync.Map
 )
 
+// ambil HTML content dari URL (parse pakai goquery)
 func getHTMLContent(URL string) (*goquery.Document, error) {
+    // check kalo HTML content nya udah ada di cache
     if value, ok := htmlCache.Load(URL); ok {
         return value.(*goquery.Document), nil
     }
@@ -326,20 +335,25 @@ func getHTMLContent(URL string) (*goquery.Document, error) {
         return nil, fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
     }
 
+    // parse html content dengan goquery
     doc, err := goquery.NewDocumentFromReader(resp.Body)
     if err != nil {
         return nil, err
     }
 
+    // cache html nya buat nanti dipake (kalo dibutuhkan pas search lain)
     htmlCache.Store(URL, doc)
     return doc, nil
 }
 
+// ambil links dari wikipedia
 func getLinks(URL string) []string {
+    // cek apakah link nya udah ada di cache
     if value, ok := linkCache.Load(URL); ok {
         return value.([]string)
     }
 
+    // fetch html content terus parse utk dpt link nya
     doc, err := getHTMLContent(URL)
     if err != nil {
         log.Printf("Failed to fetch HTML content for %s: %v", URL, err)
@@ -386,6 +400,8 @@ func getLinks(URL string) []string {
             }
         }
     })
+
+    // cache linknya utk dipake lagi
     linkCache.Store(URL, links)
     return links
 }
@@ -402,6 +418,7 @@ func getPath(endNode *Node) []string {
     return path
 }
 
+// handler utk usernya pilih bfs/ ids
 func ShortestPathHandler(w http.ResponseWriter, r *http.Request) {
     algorithm := r.URL.Query().Get("algorithm")
     switch algorithm {
