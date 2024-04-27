@@ -147,14 +147,13 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
     batchSize := 15
 
     start := time.Now()
+
     var mutex sync.Mutex
 
     if startURL == endURL {
         return []string{startURL}, 0, 0, time.Since(start)
     }
 
-    }
-    
     for len(queue) > 0 {
         batch := queue[:min(len(queue), batchSize)]
         queue = queue[min(len(queue), batchSize):]
@@ -174,7 +173,6 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
                 links := getLinks(current.URL)
 
                 mutex.Lock()
-
                 for _, link := range links {
                     if !visited[link] {
                         articlesChecked++
@@ -205,12 +203,11 @@ func BFS(startURL, endURL string) ([]string, int, int, time.Duration) {
             return path, articlesVisited-1, articlesChecked, end
         }
     }
-    return nil, len(visited)-1, articlesChecked, time.Since(start)
+
+    return nil, 0, articlesChecked, time.Since(start)
 }
 
-
-
-
+// fungsi ids
 func IDS(startURL, endURL string, file *os.File) ([]string, int, int, time.Duration) {
     startTime := time.Now()
     visited := make(map[string]bool)
